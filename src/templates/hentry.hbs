@@ -1,0 +1,21 @@
+<section class="h-entry">
+
+  <header>
+    <span class="h-card">
+      <a class="u-url" href="{{ author.url }}">
+        <img class="u-photo" src="{{ author.avatar }}" width="48" height="48">
+        <span class="p-name">{{ author.name }}</span>
+        <span class="p-nickname">{{ author.nickname }}</span>
+      </a>
+    </span>
+    <a class="u-url" href="{{ permalink }}">
+      <time class="dt-published timeago" datetime="{{ published }}">{{ published }}</time>
+    </a>
+  </header>
+
+  <p class="e-content">{{ content }}</p>
+
+  <footer>
+  </footer>
+
+</section>

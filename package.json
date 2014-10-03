@@ -1,0 +1,57 @@
+{
+  "name": "tootr",
+  "version": "0.0.1",
+  "description": "Toot your goings on",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lmorchard/tootr.git"
+  },
+  "scripts": {
+    "github-oauth-proxy": "OAUTH_CLIENT_ID=6d59b16e660e246d3ee5 OAUTH_CLIENT_SECRET=5a693ce4e5b541af6cb7f021c98485670f78feff node node_modules/gatekeeper/server.js"
+  },
+  "browser": {
+    "underscore": "backbone/node_modules/underscore",
+    "timeago": "./src/javascript/vendor/jquery.timeago.js"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim",
+      "coffeeify",
+      "hbsfy"
+    ]
+  },
+  "browserify-shim": {
+    "jquery": "global:jQuery",
+    "timeago": {
+      "exports": "timeago",
+      "depends": [
+        "jquery:jQuery"
+      ]
+    }
+  },
+  "devDependencies": {
+    "browser-sync": "~1.3.6",
+    "browserify": "~5.10.1",
+    "browserify-shim": "~3.7.0",
+    "coffeeify": "~0.7.0",
+    "gulp": "^3.8.7",
+    "gulp-changed": "^0.4.1",
+    "gulp-imagemin": "^0.6.2",
+    "gulp-notify": "^1.4.2",
+    "gulp-stylus": "^1.3.3",
+    "gulp-util": "^3.0.0",
+    "handlebars": "^1.3.0",
+    "hbsfy": "~2.0.0",
+    "nib": "^1.0.4",
+    "pretty-hrtime": "~0.2.1",
+    "require-dir": "^0.1.0",
+    "stylus": "^0.49.1",
+    "vinyl-source-stream": "~0.1.1",
+    "watchify": "~1.0.2"
+  },
+  "dependencies": {
+    "backbone": "~1.1.2",
+    "gatekeeper": "git://github.com/prose/gatekeeper.git",
+    "jquery": "~2.1.0"
+  }
+}
