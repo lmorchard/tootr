@@ -3,6 +3,7 @@ var src = './src';
 
 module.exports = {
   browserSync: {
+    open: false,
     server: {
       // We're serving the src folder as well
       // for sass sourcemap linking

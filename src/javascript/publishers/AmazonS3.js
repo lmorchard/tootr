@@ -1,4 +1,5 @@
 var _ = require('underscore');
+var S3Ajax = require('S3Ajax');
 
 module.exports = function (publishers, baseClass, baseProto) {
   var AmazonS3 = publishers.makeConstructor();
