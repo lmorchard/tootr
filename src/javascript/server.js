@@ -29,29 +29,6 @@ app.all('*', function (req, res, next) {
   next();
 });
 
-app.get('/amazon/authenticate', function (req, res) {
-  var access_token = req.query.access_token;
-  console.log('amazon authenticating:' + access_token);
-  request({
-    url: 'https://api.amazon.com/auth/o2/tokeninfo?access_token=' + access_token,
-    json: true
-  }, function (err, resp, body) {
-    if (body.aud !== config.amazon_client_id) {
-      var result = {"error": "bad_client_id"};
-      console.log(result);
-      res.json(result);
-    } else {
-      request({
-        url: 'https://api.amazon.com/user/profile',
-        headers: { 'Authorization': 'bearer ' + access_token },
-        json: true
-      }, function (err, resp, body) {
-        res.json(body);
-      });
-    }
-  });
-});
-
 app.get('/github/authenticate/:code', function(req, res) {
   console.log('github authenticating code:' + req.params.code);
   request({
