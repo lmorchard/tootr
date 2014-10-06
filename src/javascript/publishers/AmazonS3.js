@@ -39,7 +39,7 @@ module.exports = function (publishers, makeConstructor, baseClass, baseProto) {
       options = { scope : 'profile' };
       var redir = location.protocol + '//' + location.hostname +
         (location.port ? ':' + location.port : '');
-      amazon.Login.authorize(options, redir + '?loginType=AmazonS3');
+      amazon.Login.authorize(options, redir + 'index.html?loginType=AmazonS3');
       return false;
     },
 
