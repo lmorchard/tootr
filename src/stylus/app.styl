@@ -9,16 +9,32 @@ body > section#wrapper {
   padding: 1em;
   margin: 0 auto;
 
-  header {
+  >header {
+    position: relative;
     h1 {
       margin: 0px;
       text-align: center;
+    }
+
+    .login {
+      display: none;
+      position: absolute;
+      top: 0em;
+      right: 0em;
+    }
+
+    .session {
+      display: none;
+      position: absolute;
+      top: 0em;
+      right: 0em;
     }
   }
 }
 
 form#toot {
-  display: relative;
+  display: none;
+  position: relative;
   padding: 0.25em;
   textarea {
     width: 100%;
@@ -74,4 +90,20 @@ section.h-feed {
       margin: 0.5em 0 0.5em 0;
     }
   }
+}
+
+body.logged-out > section#wrapper {
+  >header {
+    .login { display: block; }
+    .session { display: none; }
+  }
+  form#toot { display: none; }
+}
+
+body.logged-in > section#wrapper {
+  >header {
+    .login { display: none; }
+    .session { display: block; }
+  }
+  form#toot { display: block; }
 }

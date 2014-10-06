@@ -6,7 +6,7 @@ var publishers = require('../publishers');
 var hentry = require('../../templates/hentry');
 
 var author = {
-  avatar: "http://lmorchard.com/avatar.jpg",
+  avatar: "//lmorchard.com/avatar.jpg",
   url: "http://lmorchard.com",
   name: "Les Orchard",
   nickname: "lmorchard"
@@ -24,15 +24,6 @@ module.exports = function () {
     $('.h-feed').prepend(entry);
     entry.find('time.timeago').timeago();
   }
-
-  $('button#login').click(function () {
-    location.href = "https://github.com/login/oauth/authorize?" + $.param({
-      client_id: gh_oauth.client_id,
-      redirect_uri: gh_oauth.redirect_uri,
-      scope: gh_oauth.scope.join(','),
-      state: Date.now() + '-' + Math.random()
-    });
-  });
 
   $('form#toot').each(function () {
 

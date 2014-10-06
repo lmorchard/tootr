@@ -3,4 +3,6 @@ node_modules
 *.sw[po]
 xfers
 build
-config.json
+.awspublish-*
+config-aws.json
+config-server.json

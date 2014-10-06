@@ -1,7 +1,7 @@
 var _ = require('underscore');
 
-module.exports = function (publishers, baseClass, baseProto) {
-  var Dropbox = publishers.makeConstructor();
+module.exports = function (publishers, makeConstructor, baseClass, baseProto) {
+  var Dropbox = makeConstructor();
 
   _.extend(Dropbox, baseClass, {
   });
