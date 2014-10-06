@@ -1,7 +1,7 @@
 var _ = require('underscore');
 
-module.exports = function (publishers, makeConstructor, baseClass, baseProto) {
-  var Github = makeConstructor();
+module.exports = function (publishers, baseModule) {
+  var Github = baseModule();
 
   /*
   $('button#login').click(function () {
@@ -13,12 +13,6 @@ module.exports = function (publishers, makeConstructor, baseClass, baseProto) {
     });
   });
   */
-
-  _.extend(Github, baseClass, {
-  });
-
-  _.extend(Github.prototype, baseProto(Github), {
-  });
 
   return Github;
 };

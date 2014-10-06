@@ -3,22 +3,56 @@ var $ = require('jquery');
 
 var publishers = module.exports = {};
 
-var makeConstructor = function () {
-  return function () {
+var LOCAL_AUTH_KEY = 'localauth20141005';
+
+publishers.clearAuth = function () {
+  localStorage.removeItem(LOCAL_AUTH_KEY);
+  publishers.clearCurrent();
+};
+
+publishers.setAuth = function (auth) {
+  localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(auth));
+  publishers.checkAuth();
+};
+
+publishers.setCurrent = function (publisher) {
+  publishers.current = publisher;
+  $('body')
+    .addClass('logged-in')
+    .removeClass('logged-out');
+};
+
+publishers.clearCurrent = function () {
+  publishers.current = null;
+  $('body')
+    .removeClass('logged-in')
+    .addClass('logged-out');
+}
+
+publishers.checkAuth = function () {
+  var auth = null;
+  try {
+    var auth_data = localStorage.getItem(LOCAL_AUTH_KEY);
+    var auth = JSON.parse(auth_data);
+    if (auth.type in publishers) {
+      publishers[auth.type].checkAuth(auth);
+    }
+  } catch (e) { /* No-op */ }
+  if (!auth) { publishers.clearCurrent(); }
+};
+
+var baseModule = function () {
+  var constructor = function () {
     this.init.apply(this, arguments);
   };
-};
-
-var baseClass = {
-  defaults: {},
-};
-
-var baseProto = function (cls) {
-  return {
-    init: function baseInit (options) {
-      this.options = _.defaults(options || {}, cls.defaults);
+  constructor.defaults = {};
+  constructor.__base__ = {
+    init: function (options) {
+      this.options = _.defaults(options || {}, constructor.defaults);
     }
   };
+  _.extend(constructor.prototype, constructor.__base__);
+  return constructor;
 };
 
 var modules = {
@@ -27,41 +61,5 @@ var modules = {
   'Github': require('./publishers/Github')
 };
 for (var name in modules) {
-  publishers[name] = modules[name](publishers, makeConstructor, baseClass, baseProto);
-}
-
-var LOCAL_AUTH_KEY = 'localauth20141005';
-
-publishers.clearAuth = function () {
-  localStorage.removeItem(LOCAL_AUTH_KEY);
-  publishers.checkAuth();
-};
-
-publishers.setAuth = function (auth) {
-  localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(auth));
-  publishers.checkAuth();
-};
-
-publishers.checkAuth = function () {
-  publishers.publisher = null;
-  var auth = null;
-  var auth_data = localStorage.getItem(LOCAL_AUTH_KEY);
-  if (auth_data) {
-    try {
-      var auth = JSON.parse(auth_data);
-      if (auth.type in publishers) {
-        $('body').addClass('logged-in');
-        $('body').removeClass('logged-out');
-        publishers.publisher = new publishers[auth.type](auth);
-      }
-    } catch (e) {
-      // No-op
-      console.log("AUTH LOAD ERR " + e);
-    }
-  }
-  if (!auth) {
-    $('body').removeClass('logged-in');
-    $('body').addClass('logged-out');
-    publishers.publisher = null;
-  }
+  publishers[name] = modules[name](publishers, baseModule);
 }

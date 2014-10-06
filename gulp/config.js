@@ -38,14 +38,22 @@ module.exports = {
     extensions: ['.coffee', '.hbs'],
     // A separate bundle will be generated for each
     // bundle config in the list below
-    bundleConfigs: [{
-      entries: './src/javascript/app.js',
-      dest: dest,
-      outputName: 'app.js'
-    }, {
-      entries: './src/javascript/head.js',
-      dest: dest,
-      outputName: 'head.js'
-    }]
+    bundleConfigs: [
+      {
+        entries: './src/javascript/app.js',
+        dest: dest,
+        outputName: 'app.js'
+      },
+      {
+        entries: './src/javascript/head.js',
+        dest: dest,
+        outputName: 'head.js'
+      },
+      {
+        entries: './src/javascript/site.js',
+        dest: dest,
+        outputName: 'site.js'
+      }
+    ]
   }
 };

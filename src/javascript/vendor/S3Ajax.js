@@ -203,7 +203,7 @@ S3Ajax.prototype = {
 
         // Handle Content-Type header
         if (!kwArgs.content_type && kwArgs.method === 'PUT') {
-            kwArgs.content_type = 'text/plain';
+            kwArgs.content_type = this.default_content_type;
         }
         if (kwArgs.content_type) {
             hdrs['Content-Type'] = kwArgs.content_type;

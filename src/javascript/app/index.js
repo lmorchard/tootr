@@ -1,5 +1,7 @@
 require('timeago');
 var $ = require('jquery');
+var _ = require('underscore');
+var async = require('async');
 
 var publishers = require('../publishers');
 
@@ -48,5 +50,34 @@ module.exports = function () {
   ];
 
   entries.forEach(addEntry);
+
+  if (publishers.current) {
+
+    var publisher = publishers.current;
+
+    publisher.list('', function (err, resources) {
+
+      if (true || !('index.html' in resources)) {
+        var assets = [
+          {src: 'site.html', dest: 'index.html', content: ''},
+          {src: 'site.css', dest: 'site.css', content: ''},
+          {src: 'site.js', dest: 'site.js', content: ''}
+        ];
+        async.each(assets, function (asset, next) {
+          $.get(asset.src, function (content) {
+            publisher.put(asset.dest, content, next);
+          });
+        }, function (err) {
+          if (err) {
+            console.log("PUT FAILED " + JSON.stringify(err));
+          } else {
+            console.log("PUT SUCCESS");
+          }
+        });
+      }
+
+    });
+
+  }
 
 };
