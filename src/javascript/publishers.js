@@ -1,5 +1,6 @@
 var _ = require('underscore');
 var $ = require('jquery');
+var PubSub = require('pubsub-js');
 
 var publishers = module.exports = {};
 
@@ -14,20 +15,6 @@ publishers.setAuth = function (auth) {
   localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(auth));
   publishers.checkAuth();
 };
-
-publishers.setCurrent = function (publisher) {
-  publishers.current = publisher;
-  $('body')
-    .addClass('logged-in')
-    .removeClass('logged-out');
-};
-
-publishers.clearCurrent = function () {
-  publishers.current = null;
-  $('body')
-    .removeClass('logged-in')
-    .addClass('logged-out');
-}
 
 publishers.checkAuth = function () {
   var auth = null;
@@ -54,6 +41,16 @@ var baseModule = function () {
   _.extend(constructor.prototype, constructor.__base__);
   return constructor;
 };
+
+publishers.setCurrent = function (publisher) {
+  publishers.current = publisher;
+  PubSub.publish('publishers.setCurrent', publisher);
+};
+
+publishers.clearCurrent = function () {
+  publishers.current = null;
+  PubSub.publish('publishers.clearCurrent');
+}
 
 var modules = {
   'AmazonS3': require('./publishers/AmazonS3'),

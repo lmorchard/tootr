@@ -64,6 +64,9 @@ module.exports = function (publishers, baseModule) {
     var now = new Date();
     var expiration = new Date(auth.credentials.Expiration);
     if (now < expiration) {
+      console.log("Amazon token expires in " +
+          (expiration.getTime() - now.getTime()) / 1000 +
+          " seconds.");
       publishers.setCurrent(new AmazonS3(auth));
     } else {
       AmazonS3.refreshCredentials(auth.access_token, function (err, auth) {
@@ -138,7 +141,7 @@ module.exports = function (publishers, baseModule) {
 
     this.prefix = 'users/amazon/' + profile.user_id + '/';
 
-    var link = config.BUCKET_BASE_URL + this.prefix;
+    var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
     $('body').addClass('logged-in-amazon');
     $('section#wrapper > header .session .username')
       .attr('href', link).text(profile.name);
@@ -183,14 +186,8 @@ module.exports = function (publishers, baseModule) {
   AmazonS3.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
-      function (req, obj) {
-        console.log("PUT SUCCESS");
-        console.log(obj);
-      },
-      function (req, obj) {
-        console.log("ERROR");
-        console.log(obj);
-      }
+      function (req, obj) { cb(null, req.responseText); },
+      function (req, obj) { cb(obj.Error, null); }
     );
   };
 
