@@ -21,6 +21,11 @@ var config = _.extend({
     CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
     BUCKET: 'tootsr',
     BUCKET_BASE_URL: 'https://tootsr.s3.amazonaws.com/'
+  },
+  "tootsr.s3-website-us-east-1.amazonaws.com": {
+    CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
+    BUCKET: 'tootsr',
+    BUCKET_BASE_URL: 'https://tootsr.s3.amazonaws.com/'
   }
 }[location.hostname]);
 
@@ -123,7 +128,7 @@ module.exports = function (publishers, baseModule) {
     publishers.clearAuth();
     amazon.Login.logout();
     location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') + '/';
+      (location.port ? ':' + location.port : '') + '/index.html';
   };
 
   AmazonS3.prototype.init = function (options) {

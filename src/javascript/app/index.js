@@ -23,6 +23,11 @@ function setup (msg, publisher) {
     if ('index.html' in resources) {
       publisher.get('index.html', function (err, content) {
         docIndex.documentElement.innerHTML = content;
+        var entriesSrc = docIndex.querySelector('#entries');
+        var entriesDest = document.querySelector('#entries');
+        for (var i=0; i<entriesSrc.childNodes.length; i++) {
+          entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
+        }
       });
     } else {
 
