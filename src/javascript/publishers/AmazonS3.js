@@ -141,7 +141,8 @@ module.exports = function (publishers, baseModule) {
     publishers.clearAuth();
     amazon.Login.logout();
     location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') + '/index.html';
+      (location.port ? ':' + location.port : '') +
+      location.pathname;
   };
 
   AmazonS3.prototype.init = function (options) {
