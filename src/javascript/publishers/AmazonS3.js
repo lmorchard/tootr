@@ -47,10 +47,12 @@ module.exports = function (publishers, baseModule) {
   window.onAmazonLoginReady = function() {
     amazon.Login.setClientId(config.CLIENT_ID);
     $('#LoginWithAmazon').click(function () {
-      return AmazonS3.startLogin();
+      AmazonS3.startLogin();
+      return false;
     });
     $('#LogoutWithAmazon').click(function () {
-      return AmazonS3.startLogout();
+      AmazonS3.startLogout();
+      return false;
     });
   };
   (function(d) {
