@@ -11,6 +11,10 @@ gulp build
 
 ## TODO
 
+* Toots
+  * edit
+  * delete
+
 * Publishers
   * amazon s3 with own credentials
   * github
