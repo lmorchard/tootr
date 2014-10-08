@@ -37,8 +37,6 @@ var config = _.extend({
   }
 }[location.hostname]);
 
-console.log(JSON.stringify(config));
-
 module.exports = function (publishers, baseModule) {
   var AmazonS3 = baseModule();
 
