@@ -1,4 +1,5 @@
 var $ = require('jquery');
+var misc = require('./misc');
 var PubSub = require('pubsub-js');
 var publishers = require('./publishers');
 
@@ -15,8 +16,15 @@ PubSub.subscribe('publishers.clearCurrent', function (msg) {
   $('body').removeClass('logged-in').addClass('logged-out');
 });
 
-if (location.search.indexOf('loginType=AmazonS3') !== -1) {
-  publishers.AmazonS3.finishLogin();
+var qparams = misc.getQueryParameters();
+if ('loginType' in qparams && qparams.loginType in publishers) {
+
+  publishers[qparams.loginType].finishLogin();
+
+  var clean_loc = location.protocol + '//' + location.hostname +
+    (location.port ? ':' + location.port : '') + location.pathname;
+  history.replaceState({}, '', clean_loc);
+
 } else {
   publishers.checkAuth();
 }

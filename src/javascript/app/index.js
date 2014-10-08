@@ -1,3 +1,5 @@
+var crypto = require('crypto');
+
 require('timeago');
 var $ = require('jquery');
 var _ = require('underscore');
@@ -15,90 +17,99 @@ var author = {
   nickname: "lmorchard"
 };
 
+module.exports = function () {
+  PubSub.subscribe('publishers.setCurrent', setup);
+};
+
+var docIndex = document.implementation.createHTMLDocument('');
+
 function setup (msg, publisher) {
-  var docIndex = document.implementation.createHTMLDocument('');
+
+  var hash = crypto.createHash('md5')
+    .update(publishers.auth.profile.email).digest('hex');
+
+  $('header section.session img.avatar')
+    .attr('src', 'https://www.gravatar.com/avatar/' + hash);
+  $('header .session .username')
+    .text(publishers.auth.profile.name);
 
   publisher.list('', function (err, resources) {
-
     if ('index.html' in resources) {
-      publisher.get('index.html', function (err, content) {
-        docIndex.documentElement.innerHTML = content;
-        var entriesSrc = docIndex.querySelector('#entries');
-        var entriesDest = document.querySelector('#entries');
-        for (var i=0; i<entriesSrc.childNodes.length; i++) {
-          entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
-        }
-      });
+      return loadToots(publisher);
     } else {
-
-      var assets = [
-        {src: 'site.html', dest: 'index.html'},
-        {src: 'site.css', dest: 'site.css'},
-        {src: 'site.js', dest: 'site.js'}
-      ];
-
-      async.each(assets, function (asset, next) {
-        $.get(asset.src, function (content) {
-          publisher.put(asset.dest, content, next);
-          if (asset.src == 'site.html') {
-            docIndex.documentElement.innerHTML = content;
-          }
-        });
-      }, function (err) {
-        if (err) {
-        } else {
-        }
-      });
-
+      return firstRun(publisher);
     }
-
   });
 
-  function addEntry (data) {
-    data.author = data.author || author;
-    data.published = data.published || (new Date()).toISOString();
-    data.permalink = '/posts/' + Date.now();
-
-    var entry = $(hentry(data));
-
-    $('#entries').prepend(entry);
-    entry.find('time.timeago').timeago();
-
-    var entries = docIndex.querySelector('#entries');
-    var tmp = docIndex.createElement('div');
-    tmp.innerHTML = hentry(data);
-    entries.insertBefore(tmp.firstChild, entries.firstChild);
-    publisher.put('index.html', docIndex.documentElement.outerHTML, function (err) {
-      console.log("SAVE");
-    });
-  }
-
   $('form#toot').each(function () {
-
     var f = $(this);
     f.submit(function () { return false; });
-
     f.find('[name=commit]').click(function (ev) {
       var textarea = f.find('[name=content]');
-      addEntry({
+      addEntry(publisher, {
         content: textarea.val()
       });
       textarea.val('');
       return false;
     });
+  });
 
+}
+
+function addEntry (publisher, data) {
+
+  if (publishers.auth.profile.email) {
+    var hash = crypto.createHash('md5')
+      .update(publishers.auth.profile.email).digest('hex');
+    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
+  }
+  data.author = data.author || author;
+
+  data.published = data.published || (new Date()).toISOString();
+  data.id = Date.now() + '-' + _.random(0, 100);
+  data.permalink = '#' + data.id;
+
+  var entry = $(hentry(data));
+  $('#entries').prepend(entry);
+  entry.find('time.timeago').timeago();
+
+  var entries = docIndex.querySelector('#entries');
+  var tmp = docIndex.createElement('div');
+  tmp.innerHTML = hentry(data);
+  entries.insertBefore(tmp.firstChild, entries.firstChild);
+  publisher.put('index.html', docIndex.documentElement.outerHTML, function (err) {
+    console.log("Saved toots " + err);
+  });
+
+}
+
+function firstRun (publisher) {
+  var assets = [
+    {src: 'site.html', dest: 'index.html'},
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+      if (asset.src == 'site.html') {
+        docIndex.documentElement.innerHTML = content;
+      }
+    });
+  }, function (err) {
+    if (err) {
+      console.log("First run error: " + err);
+    }
   });
 }
 
-module.exports = function () {
-  PubSub.subscribe('publishers.setCurrent', setup);
-
-  /*
-  var entries = [
-    { content: "This is a test", published: "2014-06-12T12:23:34Z" },
-    { content: "This is another test", published: "2014-07-12T12:23:34Z" },
-    { content: "This is one more test", published: "2014-09-12T12:23:34Z" }
-  ];
-  entries.forEach(addEntry);
-  */
-};
+function loadToots (publisher) {
+  publisher.get('index.html', function (err, content) {
+    docIndex.documentElement.innerHTML = content;
+    var entriesSrc = docIndex.querySelector('#entries');
+    var entriesDest = document.querySelector('#entries');
+    for (var i=0; i<entriesSrc.childNodes.length; i++) {
+      entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
+    }
+  });
+}

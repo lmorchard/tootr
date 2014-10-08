@@ -7,11 +7,13 @@ var publishers = module.exports = {};
 var LOCAL_AUTH_KEY = 'localauth20141005';
 
 publishers.clearAuth = function () {
+  publishers.auth = null;
   localStorage.removeItem(LOCAL_AUTH_KEY);
   publishers.clearCurrent();
 };
 
 publishers.setAuth = function (auth) {
+  publishers.auth = auth;
   localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(auth));
   publishers.checkAuth();
 };
@@ -22,6 +24,7 @@ publishers.checkAuth = function () {
     var auth_data = localStorage.getItem(LOCAL_AUTH_KEY);
     var auth = JSON.parse(auth_data);
     if (auth.type in publishers) {
+      publishers.auth = auth;
       publishers[auth.type].checkAuth(auth);
     }
   } catch (e) { /* No-op */ }

@@ -9,25 +9,35 @@ var S3Ajax = require('S3Ajax');
 //
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
-  ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
   TOKEN_DURATION: 900
 }, {
   "localhost": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
-    BUCKET: 'tootsr',
-    BUCKET_BASE_URL: 'https://tootsr.s3.amazonaws.com/'
+    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
+    BUCKET: 'tootr-dev',
+    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
+  },
+  "tootsr-dev.s3.amazonaws.com": {
+    CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
+    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
+    BUCKET: 'tootr-dev',
+    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
   },
   "tootsr.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
-    BUCKET: 'tootsr',
-    BUCKET_BASE_URL: 'https://tootsr.s3.amazonaws.com/'
+    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
+    BUCKET: 'tootr',
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
   },
-  "tootsr.s3-website-us-east-1.amazonaws.com": {
+  "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
-    BUCKET: 'tootsr',
-    BUCKET_BASE_URL: 'https://tootsr.s3.amazonaws.com/'
+    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
+    BUCKET: 'tootr',
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
   }
 }[location.hostname]);
+
+console.log(JSON.stringify(config));
 
 module.exports = function (publishers, baseModule) {
   var AmazonS3 = baseModule();
@@ -96,14 +106,15 @@ module.exports = function (publishers, baseModule) {
 
       auth.profile = profile;
 
-      return $.ajax('https://sts.amazonaws.com/?' +
-        'ProviderId=www.amazon.com&' +
-        'DurationSeconds=' + config.TOKEN_DURATION + '&' +
-        'Action=AssumeRoleWithWebIdentity&' +
-        'Version=2011-06-15&' +
-        'RoleSessionName=web-identity-federation&' +
-        'RoleArn=' + config.ROLE_ARN + '&' +
-        'WebIdentityToken=' + access_token);
+      return $.ajax('https://sts.amazonaws.com/?' + $.param({
+        'Action': 'AssumeRoleWithWebIdentity',
+        'Version': '2011-06-15',
+        'RoleSessionName': 'web-identity-federation',
+        'ProviderId': 'www.amazon.com',
+        'DurationSeconds': config.TOKEN_DURATION,
+        'RoleArn': config.ROLE_ARN,
+        'WebIdentityToken': access_token
+      }));
 
     }).then(function (dataXML, status, xhr) {
 
@@ -118,9 +129,10 @@ module.exports = function (publishers, baseModule) {
       if (cb) { cb(null, auth); }
 
     }).fail(function (xhr, status, err) {
-      console.log("ERROR LOGGING IN " + status + " " + err);
+
       publishers.clearAuth();
       if (cb) { cb(err, null); }
+
     });
   },
 
@@ -146,10 +158,10 @@ module.exports = function (publishers, baseModule) {
 
     this.prefix = 'users/amazon/' + profile.user_id + '/';
 
-    var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
     $('body').addClass('logged-in-amazon');
-    $('section#wrapper > header .session .username')
-      .attr('href', link).text(profile.name);
+
+    var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
+    $('header .session .username').attr('href', link)
   };
 
   AmazonS3.prototype.list = function (path, cb) {
