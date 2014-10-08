@@ -16088,8 +16088,9 @@ module.exports = function (publishers, baseModule) {
   AmazonS3.startLogin = function () {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '');
-    amazon.Login.authorize(options, redir + '/index.html?loginType=AmazonS3');
+      (location.port ? ':' + location.port : '') +
+      location.pathname + '?loginType=AmazonS3';
+    amazon.Login.authorize(options, redir);
   },
 
   AmazonS3.finishLogin = function () {
