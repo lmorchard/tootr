@@ -1,8 +1,0 @@
-.DS_Store
-node_modules
-*.sw[po]
-xfers
-build
-.awspublish-*
-config-aws.json
-config-server.json
