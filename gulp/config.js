@@ -31,6 +31,8 @@ module.exports = {
     src: src + "/htdocs/**",
     dest: dest
   },
+  ghdeploy : {
+  },
   browserify: {
     // Enable source maps
     debug: false,
