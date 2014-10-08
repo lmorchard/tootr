@@ -2,6 +2,13 @@
 
 toot your own horn
 
+## Hacking
+
+```
+npm install
+gulp build
+```
+
 ## TODO
 
 * Publishers
@@ -9,6 +16,7 @@ toot your own horn
   * github
   * dropbox
   * webdav (?)
+  * ???
 
 * Archives
   * collate toots into HTML feeds by date yyyy/mm/dd.html
