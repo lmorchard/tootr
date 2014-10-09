@@ -46,9 +46,9 @@ function setup (msg, publisher) {
     f.submit(function () { return false; });
     f.find('[name=commit]').click(function (ev) {
       var textarea = f.find('[name=content]');
-      addEntry(publisher, {
-        content: textarea.val()
-      });
+      var content = textarea.val().trim();
+      if (!content) { return; }
+      addEntry(publisher, { content: content });
       textarea.val('');
       return false;
     });
