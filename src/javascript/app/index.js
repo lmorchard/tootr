@@ -111,5 +111,6 @@ function loadToots (publisher) {
     for (var i=0; i<entriesSrc.childNodes.length; i++) {
       entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
     }
+    $('time.timeago').timeago();
   });
 }

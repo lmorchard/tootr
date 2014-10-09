@@ -93,6 +93,24 @@ module.exports = function (publishers, baseModule) {
         }
       });
     }
+
+      $.ajax({
+        url: 'https://localhost:9443/amazon/presigned',
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({
+          UserId: auth.profile.user_id,
+          AccessKeyId: auth.credentials.AccessKeyId,
+          SecretAccessKey: auth.credentials.SecretAccessKey,
+          SessionToken: auth.credentials.SessionToken,
+          Bucket: config.BUCKET,
+          Path: 'hello-world.html'
+        })
+      }).then(function (data, status, xhr) {
+        console.log("PRESIGN RESUL");
+        console.log(data);
+      });
   };
 
   AmazonS3.refreshCredentials = function (access_token, cb) {
@@ -127,6 +145,7 @@ module.exports = function (publishers, baseModule) {
 
       auth.credentials = credentials;
       publishers.setAuth(auth);
+
       if (cb) { cb(null, auth); }
 
     }).fail(function (xhr, status, err) {
