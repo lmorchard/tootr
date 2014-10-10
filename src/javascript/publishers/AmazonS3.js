@@ -100,16 +100,35 @@ module.exports = function (publishers, baseModule) {
         dataType: 'json',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
-          UserId: auth.profile.user_id,
-          AccessKeyId: auth.credentials.AccessKeyId,
-          SecretAccessKey: auth.credentials.SecretAccessKey,
-          SessionToken: auth.credentials.SessionToken,
+          AccessToken: auth.access_token,
           Bucket: config.BUCKET,
           Path: 'hello-world.html'
         })
       }).then(function (data, status, xhr) {
-        console.log("PRESIGN RESUL");
-        console.log(data);
+
+        data.key = 'users/amazon/' + auth.profile.user_id + '/hello.txt';
+        data['content-type'] = 'text/html';
+        data.file = "HELLO WORLD " + Date.now();
+
+
+        var formdata = new FormData();
+        for (var k in data) {
+          formdata.append(k, data[k]);
+        }
+        $.ajax({
+          url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
+          type: 'POST',
+          data: formdata,
+          processData: false,
+          contentType: false,
+          cache: false
+        }).then(function (data, status, xhr) {
+          console.log("BLARGH " + status);
+        }, function (xhr, status, err) {
+          console.log("ERR " + err);
+          console.log(xhr.responseText);
+        });
+
       });
   };
 

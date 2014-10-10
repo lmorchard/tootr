@@ -7,7 +7,9 @@ var url     = require('url'),
     request = require('request');
 
 var util = require('util');
+var crypto = require('crypto');
 var _ = require('underscore');
+var policy = require('s3-policy');
 
 // Load config defaults from JSON file.
 // Environment variables override defaults.
@@ -45,24 +47,52 @@ app.post('/amazon/presigned', function (req, res) {
   util.debug(util.inspect(req.body));
   util.debug("----------------------------------------------------------------------");
 
-  var user_id = req.body.UserId
-  var temp_id = req.body.AccessKeyId;
-  var temp_key = req.body.SecretAccessKey;
-  var temp_token = req.body.SessionToken;
-  var bucket = req.body.Bucket;
-  var path = req.body.Path;
+  request({
+    url: 'https://api.amazon.com/user/profile',
+    headers: { 'Authorization': 'bearer ' + req.body.AccessToken },
+    json: true
+  }, function (err, resp, body) {
 
-  var key = 'users/amazon/' + user_id + '/' + path;
+    var user_id = body.user_id;
+    var bucket = req.body.Bucket;
+    var path = req.body.Path;
 
-  var s3 = new AWS.S3({});
+    var p = policy({
+      secret: config.aws_secret_access_key,
+      //length: 1000000,
+      bucket: bucket,
+      key: 'users/amazon/' + user_id + '/' + path,
+      expires: new Date(Date.now() + 60000),
+      acl: 'public-read'
+    });
 
-  var url = s3.getSignedUrl('putObject', {
-    Expires: 60,
-    Bucket: bucket,
-    Key: key
-  }, function (err, url) {
-    console.log(url);
-    res.json({url: url});
+    console.log(p.policy);
+    console.log(p.signature);
+
+    /*
+    var policy = new Buffer(JSON.stringify({
+      "expiration": "2020-12-01T12:00:00.000Z",
+      "conditions": [
+        {"bucket": bucket},
+        {"acl": "public-read"},
+        ["starts-with", "$key", key_base],
+        ["starts-with", "$Content-Type", "text/"],
+        ["content-length-range", 1, 500000]
+      ]
+    })).toString('base64');
+
+    var signature = crypto
+      .createHmac('sha1', )
+      .update(policy).digest('hex');
+    */
+
+    res.json({
+      AWSAccessKeyId: config.aws_access_key_id,
+      Policy: p.policy,
+      Signature: p.signature,
+      acl: 'public-read'
+    });
+
   });
 
 });
