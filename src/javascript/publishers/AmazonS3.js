@@ -15,25 +15,29 @@ var config = _.extend({
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
     BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   },
   "tootsr-dev.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
     BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   },
   "tootsr.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   },
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   }
 }[location.hostname]);
 
@@ -93,43 +97,6 @@ module.exports = function (publishers, baseModule) {
         }
       });
     }
-
-      $.ajax({
-        url: 'https://localhost:9443/amazon/presigned',
-        type: 'POST',
-        dataType: 'json',
-        contentType: "application/json; charset=utf-8",
-        data: JSON.stringify({
-          AccessToken: auth.access_token,
-          Bucket: config.BUCKET,
-          Path: 'hello-world.html'
-        })
-      }).then(function (data, status, xhr) {
-
-        data.key = 'users/amazon/' + auth.profile.user_id + '/hello.txt';
-        data['content-type'] = 'text/html';
-        data.file = "HELLO WORLD " + Date.now();
-
-
-        var formdata = new FormData();
-        for (var k in data) {
-          formdata.append(k, data[k]);
-        }
-        $.ajax({
-          url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
-          type: 'POST',
-          data: formdata,
-          processData: false,
-          contentType: false,
-          cache: false
-        }).then(function (data, status, xhr) {
-          console.log("BLARGH " + status);
-        }, function (xhr, status, err) {
-          console.log("ERR " + err);
-          console.log(xhr.responseText);
-        });
-
-      });
   };
 
   AmazonS3.refreshCredentials = function (access_token, cb) {
@@ -223,23 +190,6 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3.prototype.put = function (path, content, cb) {
-    var ext = path.substr(path.lastIndexOf('.')+1);
-    var types = {
-      'html': 'text/html; charset=UTF-8',
-      'css': 'text/css; charset=UTF-8',
-      'js': 'text/javascript; charset=UTF-8'
-    };
-    this.client.put(
-      config.BUCKET,
-      this.prefix + path,
-      content,
-      {content_type: types[ext]},
-      function (req, obj) { cb(null, obj); },
-      function (req, obj) { cb(obj.Error, null); }
-    );
-  };
-
   AmazonS3.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
@@ -251,11 +201,77 @@ module.exports = function (publishers, baseModule) {
   AmazonS3.prototype.rm = function (path, cb) {
     this.client.deleteKey(
       config.BUCKET, this.prefix + path,
-      function (req, obj) {
-      },
-      function (req, obj) {
-      }
+      function (req, obj) { cb(null, req.responseText); },
+      function (req, obj) { cb(obj.Error, null); }
     );
+  };
+
+  AmazonS3.prototype.put = function (path, content, cb) {
+    var ext = path.substr(path.lastIndexOf('.')+1);
+    var types = {
+      'html': 'text/html; charset=UTF-8',
+      'css': 'text/css; charset=UTF-8',
+      'js': 'text/javascript; charset=UTF-8'
+    };
+    var access_token = this.options.access_token;
+
+    /*
+     * Note: This is the straightforward way to do it, if the access policy
+     * allows the temporary credentials to write to the subpath in the bucket.
+     * Problem is, there is no limitation on what this user can write with
+     * those credentials. So, someone could upload lots of huge files on my S3
+     * dime, and I don't like that.
+
+    this.client.put(
+      config.BUCKET,
+      this.prefix + path,
+      content,
+      {content_type: types[ext]},
+      function (req, obj) { cb(null, obj); },
+      function (req, obj) { cb(obj.Error, null); }
+    );
+    */
+
+    /*
+     * To keep some control over uploads, I use a presigner service that
+     * imposes a policy. Then, I need to rework this as a form POST instead of
+     * an S3 REST API request.
+     */
+    $.ajax({
+      url: config.PRESIGNER_URL,
+      type: 'POST',
+      dataType: 'json',
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({
+        AccessToken: access_token,
+        Bucket: config.BUCKET,
+        Path: path,
+        ContentType: types[ext]
+      })
+    }).then(function (data, status, xhr) {
+
+      var formdata = new FormData();
+      for (var k in data) {
+        formdata.append(k, data[k]);
+      }
+      formdata.append('file', content);
+
+      return $.ajax({
+        url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
+        type: 'POST',
+        data: formdata,
+        processData: false,
+        contentType: false,
+        cache: false
+      });
+
+    }).then(function (data, status, xhr) {
+      cb(null, true);
+    }, function (xhr, status, err) {
+      console.log(xhr.responseText);
+      cb(err, null);
+    });
+
   };
 
   return AmazonS3;

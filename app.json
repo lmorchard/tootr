@@ -5,10 +5,18 @@
   "repository": "https://github.com/tootr/lmorchard",
   "keywords": ["node", "github", "oauth"],
   "env": {
-    "AMAZON_CLIENT_ID": "",
-    "AMAZON_CLIENT_SECRET": "",
     "GITHUB_OAUTH_CLIENT_ID": "",
-    "GITHUB_OAUTH_CLIENT_SECRET": ""
+    "GITHUB_OAUTH_CLIENT_SECRET": "",
+
+    "GITHUB_OAUTH_HOST": "github.com",
+    "GITHUB_OAUTH_PORT": "443",
+    "GITHUB_OAUTH_PATH": "/login/oauth/access_token",
+    "GITHUB_OAUTH_METHOD": "POST",
+
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    "AWS_REGION": "us-east-1",
+    "AWS_BUCKET": ""
   }
 }
 

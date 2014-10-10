@@ -9,7 +9,6 @@ var url     = require('url'),
 var util = require('util');
 var crypto = require('crypto');
 var _ = require('underscore');
-var policy = require('s3-policy');
 
 // Load config defaults from JSON file.
 // Environment variables override defaults.
@@ -23,14 +22,6 @@ function loadConfig() {
 
 var config = loadConfig();
 
-var AWS = require('aws-sdk');
-AWS.config.region = 'us-east-1';
-AWS.config.logger = console;
-AWS.config.update({
-  accessKeyId: config.aws_access_key_id,
-  secretAccessKey: config.aws_secret_access_key
-});
-
 var app = express();
 
 var bodyParser = require('body-parser')
@@ -43,9 +34,9 @@ app.all('*', function (req, res, next) {
 });
 
 app.post('/amazon/presigned', function (req, res) {
-  util.debug("----------------------------------------------------------------------");
-  util.debug(util.inspect(req.body));
-  util.debug("----------------------------------------------------------------------");
+  var content_type = req.body.ContentType;
+  var bucket = req.body.Bucket;
+  var path = req.body.Path;
 
   request({
     url: 'https://api.amazon.com/user/profile',
@@ -54,43 +45,31 @@ app.post('/amazon/presigned', function (req, res) {
   }, function (err, resp, body) {
 
     var user_id = body.user_id;
-    var bucket = req.body.Bucket;
-    var path = req.body.Path;
+    var key = 'users/amazon/' + user_id + '/' + path;
 
-    var p = policy({
-      secret: config.aws_secret_access_key,
-      //length: 1000000,
-      bucket: bucket,
-      key: 'users/amazon/' + user_id + '/' + path,
-      expires: new Date(Date.now() + 60000),
-      acl: 'public-read'
-    });
-
-    console.log(p.policy);
-    console.log(p.signature);
-
-    /*
     var policy = new Buffer(JSON.stringify({
-      "expiration": "2020-12-01T12:00:00.000Z",
+      "expiration": new Date(Date.now() + 60000).toISOString(),
       "conditions": [
         {"bucket": bucket},
         {"acl": "public-read"},
-        ["starts-with", "$key", key_base],
-        ["starts-with", "$Content-Type", "text/"],
+        ["starts-with", "$key", key],
+        ["starts-with", "$Content-Type", content_type],
         ["content-length-range", 1, 500000]
       ]
     })).toString('base64');
 
     var signature = crypto
-      .createHmac('sha1', )
-      .update(policy).digest('hex');
-    */
+      .createHmac('sha1', config.aws_secret_access_key)
+      .update(policy)
+      .digest('base64');
 
     res.json({
       AWSAccessKeyId: config.aws_access_key_id,
-      Policy: p.policy,
-      Signature: p.signature,
-      acl: 'public-read'
+      Policy: policy,
+      Signature: signature,
+      acl: 'public-read',
+      'Content-Type': content_type,
+      key: key
     });
 
   });
