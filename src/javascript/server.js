@@ -75,6 +75,7 @@ app.post('/amazon/presigned', function (req, res) {
 
 });
 
+/*
 app.get('/github/authenticate/:code', function(req, res) {
   console.log('github authenticating code:' + req.params.code);
   request({
@@ -93,6 +94,7 @@ app.get('/github/authenticate/:code', function(req, res) {
     res.json(result);
   });
 });
+*/
 
 var port = process.env.PORT || config.port || 9000;
 
@@ -127,5 +129,8 @@ function loadConfig() {
   for (var i in config) {
     config[i] = process.env[i.toUpperCase()] || config[i];
   }
+
+  util.debug(util.inspect(config));
+
   return config;
 }

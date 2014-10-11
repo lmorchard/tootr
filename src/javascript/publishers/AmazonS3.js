@@ -16,8 +16,8 @@ var config = _.extend({
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
     BUCKET: 'tootr-dev',
     BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
-    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
-    //PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
+    //PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
+    PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
   },
   "tootsr-dev.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
