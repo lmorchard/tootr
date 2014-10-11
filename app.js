@@ -15864,6 +15864,7 @@ function firstRun (publisher) {
 }
 
 function addEntry (publisher, data) {
+
   if (publishers.auth.profile.email) {
     var hash = crypto.createHash('md5')
       .update(publishers.auth.profile.email).digest('hex');
@@ -15872,6 +15873,7 @@ function addEntry (publisher, data) {
   author.email = publishers.auth.profile.email;
   author.nickname = publishers.auth.profile.user_id;
   author.name = publishers.auth.profile.name;
+  author.url = $('header .session .username').attr('href');
 
   data.author = data.author || author;
 
