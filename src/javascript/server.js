@@ -6,37 +6,32 @@ var url     = require('url'),
     express = require('express'),
     request = require('request');
 
+var bodyParser = require('body-parser');
+
 var util = require('util');
 var crypto = require('crypto');
 var _ = require('underscore');
-
-// Load config defaults from JSON file.
-// Environment variables override defaults.
-function loadConfig() {
-  var config = JSON.parse(fs.readFileSync(__dirname+ '/../../config-server.json', 'utf-8'));
-  for (var i in config) {
-    config[i] = process.env[i.toUpperCase()] || config[i];
-  }
-  return config;
-}
 
 var config = loadConfig();
 
 var app = express();
 
-var bodyParser = require('body-parser')
 app.use(bodyParser.json());
 
 app.all('*', function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
 app.post('/amazon/presigned', function (req, res) {
+
   var content_type = req.body.ContentType;
   var bucket = req.body.Bucket;
   var path = req.body.Path;
+
+  // TODO: validate content-type, bucket, and path
 
   request({
     url: 'https://api.amazon.com/user/profile',
@@ -44,11 +39,16 @@ app.post('/amazon/presigned', function (req, res) {
     json: true
   }, function (err, resp, body) {
 
+    if (err) {
+      return res.status(403).send('access denied');
+    }
+
     var user_id = body.user_id;
     var key = 'users/amazon/' + user_id + '/' + path;
-
+    var expiration_timeout = config.aws_signature_timeout || 30000;
+    var expiration = new Date(Date.now() + expiration_timeout).toISOString();
     var policy = new Buffer(JSON.stringify({
-      "expiration": new Date(Date.now() + 60000).toISOString(),
+      "expiration": expiration,
       "conditions": [
         {"bucket": bucket},
         {"acl": "public-read"},
@@ -60,8 +60,7 @@ app.post('/amazon/presigned', function (req, res) {
 
     var signature = crypto
       .createHmac('sha1', config.aws_secret_access_key)
-      .update(policy)
-      .digest('base64');
+      .update(policy).digest('base64');
 
     res.json({
       AWSAccessKeyId: config.aws_access_key_id,
@@ -100,3 +99,33 @@ var port = process.env.PORT || config.port || 9000;
 app.listen(port, null, function (err) {
   console.log('tootr cheats, at your service: http://localhost:' + port);
 });
+
+function loadConfig() {
+  var defaults = {
+    "github_oauth_client_id": "GITHUB_APPLICATION_CLIENT_ID",
+    "github_oauth_client_secret": "GITHUB_APPLICATION_CLIENT_SECRET",
+    "github_oauth_host": "github.com",
+    "github_oauth_port": 443,
+    "github_oauth_path": "/login/oauth/access_token",
+    "github_oauth_method": "POST",
+
+    "aws_access_key_id": "XXX",
+    "aws_secret_access_key": "XXX",
+    "aws_region": "us-east-1",
+    "aws_bucket": "tootr",
+    "aws_signature_timeout": 30000
+  };
+  var config;
+  try {
+    var config_fn = __dirname+ '/../../config-server.json';
+    config = _.defaults(
+      JSON.parse(fs.readFileSync(config_fn, 'utf-8')),
+      defaults);
+  } catch (e) {
+    config = defaults;
+  };
+  for (var i in config) {
+    config[i] = process.env[i.toUpperCase()] || config[i];
+  }
+  return config;
+}

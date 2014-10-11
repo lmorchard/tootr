@@ -17,6 +17,7 @@ var config = _.extend({
     BUCKET: 'tootr-dev',
     BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
     PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
+    //PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
   },
   "tootsr-dev.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
@@ -37,7 +38,7 @@ var config = _.extend({
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
     BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
-    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
+    PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
   }
 }[location.hostname]);
 
@@ -160,7 +161,8 @@ module.exports = function (publishers, baseModule) {
       base_url: config.S3_BASE_URL,
       key_id: credentials.AccessKeyId,
       secret_key: credentials.SecretAccessKey,
-      security_token: credentials.SessionToken
+      security_token: credentials.SessionToken,
+      defeat_cache: true
     });
 
     this.prefix = 'users/amazon/' + profile.user_id + '/';
