@@ -15800,7 +15800,6 @@ var publishers = require('../publishers');
 var hentry = require('../../templates/hentry');
 
 var author = {
-  avatar: "https://pbs.twimg.com/profile_images/477182669923422208/pLz1yGWh_400x400.jpeg",
   url: "http://lmorchard.com",
   name: "Les Orchard",
   nickname: "lmorchard"
@@ -15813,7 +15812,6 @@ module.exports = function () {
 var docIndex = document.implementation.createHTMLDocument('');
 
 function setup (msg, publisher) {
-
   var hash = crypto.createHash('md5')
     .update(publishers.auth.profile.email).digest('hex');
 
@@ -15842,37 +15840,10 @@ function setup (msg, publisher) {
       return false;
     });
   });
-
-}
-
-function addEntry (publisher, data) {
-
-  if (publishers.auth.profile.email) {
-    var hash = crypto.createHash('md5')
-      .update(publishers.auth.profile.email).digest('hex');
-    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
-  }
-  data.author = data.author || author;
-
-  data.published = data.published || (new Date()).toISOString();
-  data.id = Date.now() + '-' + _.random(0, 100);
-  data.permalink = '#' + data.id;
-
-  var entry = $(hentry(data));
-  $('#entries').prepend(entry);
-  entry.find('time.timeago').timeago();
-
-  var entries = docIndex.querySelector('#entries');
-  var tmp = docIndex.createElement('div');
-  tmp.innerHTML = hentry(data);
-  entries.insertBefore(tmp.firstChild, entries.firstChild);
-  publisher.put('index.html', docIndex.documentElement.outerHTML, function (err) {
-    console.log("Saved toots " + err);
-  });
-
 }
 
 function firstRun (publisher) {
+  console.log("Performing first run");
   var assets = [
     {src: 'site.html', dest: 'index.html'},
     {src: 'site.css', dest: 'site.css'},
@@ -15892,15 +15863,49 @@ function firstRun (publisher) {
   });
 }
 
+function addEntry (publisher, data) {
+  if (publishers.auth.profile.email) {
+    var hash = crypto.createHash('md5')
+      .update(publishers.auth.profile.email).digest('hex');
+    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
+  }
+  data.author = data.author || author;
+
+  data.published = data.published || (new Date()).toISOString();
+  data.id = Date.now() + '-' + _.random(0, 100);
+  data.permalink = '#' + data.id;
+
+  var entry = $(hentry(data));
+  $('#entries').prepend(entry);
+  entry.find('time.timeago').timeago();
+
+  saveToots(publisher);
+}
+
 function loadToots (publisher) {
   publisher.get('index.html', function (err, content) {
     docIndex.documentElement.innerHTML = content;
-    var entriesSrc = docIndex.querySelector('#entries');
-    var entriesDest = document.querySelector('#entries');
-    for (var i=0; i<entriesSrc.childNodes.length; i++) {
-      entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
+    var dest = document.querySelector('#entries');
+    var src = docIndex.querySelector('#entries');
+    for (var i=0; i<src.childNodes.length; i++) {
+      dest.appendChild(src.childNodes[i].cloneNode(true));
     }
     $('time.timeago').timeago();
+  });
+}
+
+function saveToots (publisher) {
+  var dest = docIndex.querySelector('#entries');
+  while (dest.firstChild) {
+    dest.removeChild(dest.firstChild);
+  }
+  var src = document.querySelector('#entries');
+  for (var i=0; i<src.childNodes.length; i++) {
+    dest.appendChild(src.childNodes[i].cloneNode(true));
+  }
+  var content = docIndex.documentElement.outerHTML;
+  publisher.put('index.html', content, function (err) {
+    console.log("Saved toots " + err);
   });
 }
 
