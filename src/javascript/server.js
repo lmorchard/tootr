@@ -45,7 +45,7 @@ app.post('/amazon/presigned', function (req, res) {
 
     var user_id = body.user_id;
     var key = 'users/amazon/' + user_id + '/' + path;
-    var expiration_timeout = config.aws_signature_timeout || 30000;
+    var expiration_timeout = parseInt(config.aws_signature_timeout || 30000, 10);
     var expiration = new Date(Date.now() + expiration_timeout).toISOString();
     var policy = new Buffer(JSON.stringify({
       "expiration": expiration,
