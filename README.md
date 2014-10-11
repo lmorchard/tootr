@@ -26,4 +26,10 @@ gulp build
   * collate toots into HTML feeds by date yyyy/mm/dd.html
     * index.html alias / copy for current date?
 
+* Profile
+  * Start from Amazon profile, allow edit
+  * Link amazon user ID to a user-chosen nickname?
+  * Upload image other than gravatar
+  
+
 * Importer for Twitter archive CSV / JSON

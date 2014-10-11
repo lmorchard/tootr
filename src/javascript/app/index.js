@@ -54,6 +54,7 @@ function setup (msg, publisher) {
 }
 
 function firstRun (publisher) {
+  console.log("Performing first run");
   var assets = [
     {src: 'site.html', dest: 'index.html'},
     {src: 'site.css', dest: 'site.css'},
@@ -79,6 +80,10 @@ function addEntry (publisher, data) {
       .update(publishers.auth.profile.email).digest('hex');
     author.avatar = 'https://www.gravatar.com/avatar/' + hash;
   }
+  author.email = publishers.auth.profile.email;
+  author.nickname = publishers.auth.profile.user_id;
+  author.name = publishers.auth.profile.name;
+
   data.author = data.author || author;
 
   data.published = data.published || (new Date()).toISOString();
