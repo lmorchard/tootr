@@ -30,7 +30,7 @@ if ('loginType' in qparams && qparams.loginType in publishers) {
   publishers.checkAuth();
 }
 
-},{"./app/index":"/Users/lmorchard/devel/other/tootr/src/javascript/app/index.js","./misc":"/Users/lmorchard/devel/other/tootr/src/javascript/misc.js","./publishers":"/Users/lmorchard/devel/other/tootr/src/javascript/publishers.js","jquery":"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/Users/lmorchard/devel/other/tootr/node_modules/pubsub-js/src/pubsub.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
+},{"./app/index":"/home/lmorchard/devel/tootr/src/javascript/app/index.js","./misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","./publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers.js","jquery":"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js"}],"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
 (function (process){
 /*!
  * async
@@ -1157,7 +1157,7 @@ if ('loginType' in qparams && qparams.loginType in publishers) {
 }());
 
 }).call(this,require('_process'))
-},{"_process":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/process/browser.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js":[function(require,module,exports){
+},{"_process":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/process/browser.js"}],"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js":[function(require,module,exports){
 //     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2574,7 +2574,7 @@ if ('loginType' in qparams && qparams.loginType in publishers) {
   }
 }.call(this));
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js":[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -3626,7 +3626,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib/b64.js","ieee754":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js","is-array":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/is-array/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib/b64.js":[function(require,module,exports){
+},{"base64-js":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib/b64.js","ieee754":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js","is-array":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/is-array/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib/b64.js":[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -3748,7 +3748,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js":[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -3834,7 +3834,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/node_modules/is-array/index.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/node_modules/is-array/index.js":[function(require,module,exports){
 
 /**
  * isArray
@@ -3869,7 +3869,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js":[function(require,module,exports){
 (function (Buffer){
 var createHash = require('sha.js')
 
@@ -3903,7 +3903,7 @@ module.exports = function (alg) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./md5":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/md5.js","buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js","ripemd160":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/ripemd160/lib/ripemd160.js","sha.js":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hmac.js":[function(require,module,exports){
+},{"./md5":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/md5.js","buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js","ripemd160":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/ripemd160/lib/ripemd160.js","sha.js":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hmac.js":[function(require,module,exports){
 (function (Buffer){
 var createHash = require('./create-hash')
 
@@ -3950,7 +3950,7 @@ Hmac.prototype.digest = function (enc) {
 
 
 }).call(this,require("buffer").Buffer)
-},{"./create-hash":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js","buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/helpers.js":[function(require,module,exports){
+},{"./create-hash":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js","buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/helpers.js":[function(require,module,exports){
 (function (Buffer){
 var intSize = 4;
 var zeroBuffer = new Buffer(intSize); zeroBuffer.fill(0);
@@ -3988,7 +3988,7 @@ function hash(buf, fn, hashSize, bigEndian) {
 module.exports = { hash: hash };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js":[function(require,module,exports){
+},{"buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js":[function(require,module,exports){
 (function (Buffer){
 var rng = require('./rng')
 
@@ -4045,7 +4045,7 @@ each(['createCredentials'
 })
 
 }).call(this,require("buffer").Buffer)
-},{"./create-hash":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js","./create-hmac":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hmac.js","./pbkdf2":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/pbkdf2.js","./rng":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/rng.js","buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/md5.js":[function(require,module,exports){
+},{"./create-hash":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hash.js","./create-hmac":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/create-hmac.js","./pbkdf2":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/pbkdf2.js","./rng":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/rng.js","buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/md5.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
@@ -4202,7 +4202,7 @@ module.exports = function md5(buf) {
   return helpers.hash(buf, core_md5, 16);
 };
 
-},{"./helpers":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/helpers.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/index.js":[function(require,module,exports){
+},{"./helpers":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/helpers.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/index.js":[function(require,module,exports){
 var crypto = require('crypto')
 
 var exportFn = require('./pbkdf2')
@@ -4216,7 +4216,7 @@ module.exports = {
   __pbkdf2Export: exportFn
 }
 
-},{"./pbkdf2":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/pbkdf2.js","crypto":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/pbkdf2.js":[function(require,module,exports){
+},{"./pbkdf2":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/pbkdf2.js","crypto":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/pbkdf2.js":[function(require,module,exports){
 (function (Buffer){
 module.exports = function(crypto) {
   function pbkdf2(password, salt, iterations, keylen, digest, callback) {
@@ -4304,7 +4304,7 @@ module.exports = function(crypto) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/ripemd160/lib/ripemd160.js":[function(require,module,exports){
+},{"buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/ripemd160/lib/ripemd160.js":[function(require,module,exports){
 (function (Buffer){
 
 module.exports = ripemd160
@@ -4513,7 +4513,7 @@ function ripemd160(message) {
 
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/hash.js":[function(require,module,exports){
+},{"buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/hash.js":[function(require,module,exports){
 module.exports = function (Buffer) {
 
   //prototype class for hash functions
@@ -4592,7 +4592,7 @@ module.exports = function (Buffer) {
   return Hash
 }
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/index.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/index.js":[function(require,module,exports){
 var exports = module.exports = function (alg) {
   var Alg = exports[alg]
   if(!Alg) throw new Error(alg + ' is not supported (we accept pull requests)')
@@ -4606,7 +4606,7 @@ exports.sha1 = require('./sha1')(Buffer, Hash)
 exports.sha256 = require('./sha256')(Buffer, Hash)
 exports.sha512 = require('./sha512')(Buffer, Hash)
 
-},{"./hash":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/hash.js","./sha1":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha1.js","./sha256":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha256.js","./sha512":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha512.js","buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha1.js":[function(require,module,exports){
+},{"./hash":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/hash.js","./sha1":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha1.js","./sha256":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha256.js","./sha512":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha512.js","buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha1.js":[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -4746,7 +4746,7 @@ module.exports = function (Buffer, Hash) {
   return Sha1
 }
 
-},{"util":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/util.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha256.js":[function(require,module,exports){
+},{"util":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/util.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha256.js":[function(require,module,exports){
 
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -4895,7 +4895,7 @@ module.exports = function (Buffer, Hash) {
 
 }
 
-},{"util":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/util.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha512.js":[function(require,module,exports){
+},{"util":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/util.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/sha.js/sha512.js":[function(require,module,exports){
 var inherits = require('util').inherits
 
 module.exports = function (Buffer, Hash) {
@@ -5141,7 +5141,7 @@ module.exports = function (Buffer, Hash) {
 
 }
 
-},{"util":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/util.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/pbkdf2.js":[function(require,module,exports){
+},{"util":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/util.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/pbkdf2.js":[function(require,module,exports){
 var pbkdf2Export = require('pbkdf2-compat').__pbkdf2Export
 
 module.exports = function (crypto, exports) {
@@ -5155,13 +5155,15 @@ module.exports = function (crypto, exports) {
   return exports
 }
 
-},{"pbkdf2-compat":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/rng.js":[function(require,module,exports){
+},{"pbkdf2-compat":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/node_modules/pbkdf2-compat/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/rng.js":[function(require,module,exports){
 (function (global,Buffer){
 (function() {
   var g = ('undefined' === typeof window ? global : window) || {}
-  var foolBrowserify = require
+  var foolBrowserify = function (r) {
+    try { return require(r) } catch (_) { }
+  }
   _crypto = (
-    g.crypto || g.msCrypto || foolBrowserify('crypto')
+    g.crypto || g.msCrypto || foolBrowserify('crypto') || {}
   )
   module.exports = function(size) {
     // Modern Browsers
@@ -5186,7 +5188,7 @@ module.exports = function (crypto, exports) {
 }())
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"buffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
+},{"buffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/buffer/index.js"}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/inherits/inherits_browser.js":[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -5211,7 +5213,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -5276,14 +5278,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/support/isBufferBrowser.js":[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/util.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/util.js":[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5873,7 +5875,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/util/support/isBufferBrowser.js","_process":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/process/browser.js","inherits":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/inherits/inherits_browser.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js":[function(require,module,exports){
+},{"./support/isBuffer":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/util/support/isBufferBrowser.js","_process":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/process/browser.js","inherits":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/inherits/inherits_browser.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js":[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -5906,7 +5908,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./handlebars/exception":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./handlebars/runtime":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js","./handlebars/safe-string":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js","./handlebars/utils":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js":[function(require,module,exports){
+},{"./handlebars/base":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./handlebars/exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./handlebars/runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js","./handlebars/safe-string":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js","./handlebars/utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js":[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -6087,7 +6089,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js":[function(require,module,exports){
+},{"./exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js":[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -6116,7 +6118,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js":[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -6254,7 +6256,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./exception":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js":[function(require,module,exports){
+},{"./base":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js":[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -6266,7 +6268,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js":[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -6343,15 +6345,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/runtime.js":[function(require,module,exports){
+},{"./safe-string":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/runtime.js":[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/hbsfy/runtime.js":[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js"}],"/home/lmorchard/devel/tootr/node_modules/hbsfy/runtime.js":[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":"/Users/lmorchard/devel/other/tootr/node_modules/handlebars/runtime.js"}],"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js":[function(require,module,exports){
+},{"handlebars/runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/runtime.js"}],"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js":[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.1
  * http://jquery.com/
@@ -15543,7 +15545,7 @@ return jQuery;
 
 }));
 
-},{}],"/Users/lmorchard/devel/other/tootr/node_modules/pubsub-js/src/pubsub.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js":[function(require,module,exports){
 /*
 Copyright (c) 2010,2011,2012,2013,2014 Morgan Roderick http://roderick.dk
 License: MIT - http://mrgnrdrck.mit-license.org
@@ -15784,7 +15786,7 @@ https://github.com/mroderick/PubSubJS
 	};
 }));
 
-},{}],"/Users/lmorchard/devel/other/tootr/src/javascript/app/index.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/src/javascript/app/index.js":[function(require,module,exports){
 var crypto = require('crypto');
 
 require('timeago');
@@ -15898,10 +15900,11 @@ function loadToots (publisher) {
     for (var i=0; i<entriesSrc.childNodes.length; i++) {
       entriesDest.appendChild(entriesSrc.childNodes[i].cloneNode(true));
     }
+    $('time.timeago').timeago();
   });
 }
 
-},{"../../templates/hentry":"/Users/lmorchard/devel/other/tootr/src/templates/hentry.hbs","../publishers":"/Users/lmorchard/devel/other/tootr/src/javascript/publishers.js","async":"/Users/lmorchard/devel/other/tootr/node_modules/async/lib/async.js","crypto":"/Users/lmorchard/devel/other/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js","jquery":"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/Users/lmorchard/devel/other/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/Users/lmorchard/devel/other/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/Users/lmorchard/devel/other/tootr/src/javascript/misc.js":[function(require,module,exports){
+},{"../../templates/hentry":"/home/lmorchard/devel/tootr/src/templates/hentry.hbs","../publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","crypto":"/home/lmorchard/devel/tootr/node_modules/browserify/node_modules/crypto-browserify/index.js","jquery":"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/misc.js":[function(require,module,exports){
 module.exports.getQueryParameters = function (str) {
   return (str || document.location.search)
     .replace(/(^\?)/,'').split("&")
@@ -15953,7 +15956,7 @@ module.exports.xmlToObj = function (parent, force_lists, path) {
   return (is_struct) ? obj : cdata;
 }
 
-},{}],"/Users/lmorchard/devel/other/tootr/src/javascript/publishers.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/src/javascript/publishers.js":[function(require,module,exports){
 var _ = require('underscore');
 var $ = require('jquery');
 var PubSub = require('pubsub-js');
@@ -16020,16 +16023,14 @@ for (var name in modules) {
   publishers[name] = modules[name](publishers, baseModule);
 }
 
-},{"./publishers/AmazonS3":"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/AmazonS3.js","./publishers/Dropbox":"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/Dropbox.js","./publishers/Github":"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/Github.js","jquery":"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/Users/lmorchard/devel/other/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/AmazonS3.js":[function(require,module,exports){
+},{"./publishers/AmazonS3":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3.js","./publishers/Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./publishers/Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","jquery":"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3.js":[function(require,module,exports){
 var $ = require('jquery');
 var _ = require('underscore');
 var misc = require('../misc');
 var S3Ajax = require('S3Ajax');
 
-//
 // AmazonS3 app config, partially host-based
 // TODO: Make this user-configurable - in localstorage?
-//
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
   TOKEN_DURATION: 900
@@ -16038,35 +16039,30 @@ var config = _.extend({
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
     BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   },
-  "tootsr-dev.s3.amazonaws.com": {
-    CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
-    BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/'
-  },
-  "tootsr.s3.amazonaws.com": {
+  "tootr.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   },
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/'
+    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
+    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   }
 }[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
   var AmazonS3 = baseModule();
 
-  //
   // Set up the Login with Amazon button
   // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
-  //
   window.onAmazonLoginReady = function() {
     amazon.Login.setClientId(config.CLIENT_ID);
     $('#LoginWithAmazon').click(function () {
@@ -16150,6 +16146,7 @@ module.exports = function (publishers, baseModule) {
 
       auth.credentials = credentials;
       publishers.setAuth(auth);
+
       if (cb) { cb(null, auth); }
 
     }).fail(function (xhr, status, err) {
@@ -16178,7 +16175,8 @@ module.exports = function (publishers, baseModule) {
       base_url: config.S3_BASE_URL,
       key_id: credentials.AccessKeyId,
       secret_key: credentials.SecretAccessKey,
-      security_token: credentials.SessionToken
+      security_token: credentials.SessionToken,
+      defeat_cache: true
     });
 
     this.prefix = 'users/amazon/' + profile.user_id + '/';
@@ -16208,23 +16206,6 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3.prototype.put = function (path, content, cb) {
-    var ext = path.substr(path.lastIndexOf('.')+1);
-    var types = {
-      'html': 'text/html; charset=UTF-8',
-      'css': 'text/css; charset=UTF-8',
-      'js': 'text/javascript; charset=UTF-8'
-    };
-    this.client.put(
-      config.BUCKET,
-      this.prefix + path,
-      content,
-      {content_type: types[ext]},
-      function (req, obj) { cb(null, obj); },
-      function (req, obj) { cb(obj.Error, null); }
-    );
-  };
-
   AmazonS3.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
@@ -16236,17 +16217,83 @@ module.exports = function (publishers, baseModule) {
   AmazonS3.prototype.rm = function (path, cb) {
     this.client.deleteKey(
       config.BUCKET, this.prefix + path,
-      function (req, obj) {
-      },
-      function (req, obj) {
-      }
+      function (req, obj) { cb(null, req.responseText); },
+      function (req, obj) { cb(obj.Error, null); }
     );
+  };
+
+  AmazonS3.prototype.put = function (path, content, cb) {
+    var ext = path.substr(path.lastIndexOf('.')+1);
+    var types = {
+      'html': 'text/html; charset=UTF-8',
+      'css': 'text/css; charset=UTF-8',
+      'js': 'text/javascript; charset=UTF-8'
+    };
+    var access_token = this.options.access_token;
+
+    /*
+     * Note: This is the straightforward way to do it, if the access policy
+     * allows the temporary credentials to write to the subpath in the bucket.
+     * Problem is, there is no limitation on what this user can write with
+     * those credentials. So, someone could upload lots of huge files on my S3
+     * dime, and I don't like that.
+
+    this.client.put(
+      config.BUCKET,
+      this.prefix + path,
+      content,
+      {content_type: types[ext]},
+      function (req, obj) { cb(null, obj); },
+      function (req, obj) { cb(obj.Error, null); }
+    );
+    */
+
+    /*
+     * To keep some control over uploads, I use a presigner service that
+     * imposes a policy. Then, I need to rework this as a form POST instead of
+     * an S3 REST API request.
+     */
+    $.ajax({
+      url: config.PRESIGNER_URL,
+      type: 'POST',
+      dataType: 'json',
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({
+        AccessToken: access_token,
+        Bucket: config.BUCKET,
+        Path: path,
+        ContentType: types[ext]
+      })
+    }).then(function (data, status, xhr) {
+
+      var formdata = new FormData();
+      for (var k in data) {
+        formdata.append(k, data[k]);
+      }
+      formdata.append('file', content);
+
+      return $.ajax({
+        url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
+        type: 'POST',
+        data: formdata,
+        processData: false,
+        contentType: false,
+        cache: false
+      });
+
+    }).then(function (data, status, xhr) {
+      cb(null, true);
+    }, function (xhr, status, err) {
+      console.log(xhr.responseText);
+      cb(err, null);
+    });
+
   };
 
   return AmazonS3;
 };
 
-},{"../misc":"/Users/lmorchard/devel/other/tootr/src/javascript/misc.js","S3Ajax":"/Users/lmorchard/devel/other/tootr/src/javascript/vendor/S3Ajax.js","jquery":"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js","underscore":"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/Dropbox.js":[function(require,module,exports){
+},{"../misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","S3Ajax":"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js","jquery":"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js","underscore":"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js":[function(require,module,exports){
 var _ = require('underscore');
 
 module.exports = function (publishers, baseModule) {
@@ -16255,7 +16302,7 @@ module.exports = function (publishers, baseModule) {
   return Dropbox;
 };
 
-},{"underscore":"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/Users/lmorchard/devel/other/tootr/src/javascript/publishers/Github.js":[function(require,module,exports){
+},{"underscore":"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js":[function(require,module,exports){
 var _ = require('underscore');
 
 module.exports = function (publishers, baseModule) {
@@ -16275,7 +16322,7 @@ module.exports = function (publishers, baseModule) {
   return Github;
 };
 
-},{"underscore":"/Users/lmorchard/devel/other/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/Users/lmorchard/devel/other/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
+},{"underscore":"/home/lmorchard/devel/tootr/node_modules/backbone/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 //  S3Ajax v0.1 - An AJAX wrapper package for Amazon S3
@@ -17055,7 +17102,7 @@ function bit_rol(num, cnt)
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"/Users/lmorchard/devel/other/tootr/src/javascript/vendor/jquery.timeago.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js":[function(require,module,exports){
 (function (global){
 
 ; jQuery = global.jQuery = require("jquery");
@@ -17280,7 +17327,7 @@ function bit_rol(num, cnt)
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":"/Users/lmorchard/devel/other/tootr/node_modules/jquery/dist/jquery.js"}],"/Users/lmorchard/devel/other/tootr/src/templates/hentry.hbs":[function(require,module,exports){
+},{"jquery":"/home/lmorchard/devel/tootr/node_modules/jquery/dist/jquery.js"}],"/home/lmorchard/devel/tootr/src/templates/hentry.hbs":[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -17317,4 +17364,4 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return buffer;
   });
 
-},{"hbsfy/runtime":"/Users/lmorchard/devel/other/tootr/node_modules/hbsfy/runtime.js"}]},{},["./src/javascript/app.js"]);
+},{"hbsfy/runtime":"/home/lmorchard/devel/tootr/node_modules/hbsfy/runtime.js"}]},{},["./src/javascript/app.js"]);
