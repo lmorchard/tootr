@@ -3,10 +3,8 @@ var _ = require('underscore');
 var misc = require('../misc');
 var S3Ajax = require('S3Ajax');
 
-//
 // AmazonS3 app config, partially host-based
 // TODO: Make this user-configurable - in localstorage?
-//
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
   TOKEN_DURATION: 900
@@ -16,39 +14,29 @@ var config = _.extend({
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
     BUCKET: 'tootr-dev',
     BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
-    //PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
-    PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
-  },
-  "tootsr-dev.s3.amazonaws.com": {
-    CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
-    BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
     PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
   },
-  "tootsr.s3.amazonaws.com": {
+  "tootr.s3.amazonaws.com": {
     CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
     BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
-    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
+    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   },
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'tootr',
     BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
-    PRESIGNER_URL: 'https://tootr-dev.herokuapp.com/amazon/presigned'
+    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   }
 }[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
   var AmazonS3 = baseModule();
 
-  //
   // Set up the Login with Amazon button
   // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
-  //
   window.onAmazonLoginReady = function() {
     amazon.Login.setClientId(config.CLIENT_ID);
     $('#LoginWithAmazon').click(function () {
