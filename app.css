@@ -11,6 +11,9 @@ body > section#wrapper >header h1 {
   margin: 0px;
   text-align: center;
 }
+body > section#wrapper >header img {
+  vertical-align: middle;
+}
 body > section#wrapper >header .login {
   display: none;
   position: absolute;
