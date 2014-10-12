@@ -23,10 +23,7 @@
     "MD5": "./src/javascript/vendor/md5.js"
   },
   "browserify-shim": {
-    "timeago": {
-      "exports": null,
-      "depends": [ "jquery:jQuery" ]
-    },
+    "jquery": "global:$",
     "S3Ajax": {
       "exports": "S3Ajax"
     },

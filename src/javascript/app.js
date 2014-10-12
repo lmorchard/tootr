@@ -1,6 +1,6 @@
 var $ = require('jquery');
-var misc = require('./misc');
 var PubSub = require('pubsub-js');
+var misc = require('./misc');
 var publishers = require('./publishers');
 
 var body = $('body');
@@ -16,15 +16,6 @@ PubSub.subscribe('publishers.clearCurrent', function (msg) {
   $('body').removeClass('logged-in').addClass('logged-out');
 });
 
-var qparams = misc.getQueryParameters();
-if ('loginType' in qparams && qparams.loginType in publishers) {
+$('button#logout').click(publishers.logout);
 
-  publishers[qparams.loginType].finishLogin();
-
-  var clean_loc = location.protocol + '//' + location.hostname +
-    (location.port ? ':' + location.port : '') + location.pathname;
-  history.replaceState({}, '', clean_loc);
-
-} else {
-  publishers.checkAuth();
-}
+publishers.checkAuth();

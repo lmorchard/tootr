@@ -23,12 +23,13 @@ module.exports = function () {
 var docIndex = document.implementation.createHTMLDocument('');
 
 function setup (msg, publisher) {
-  var hash = MD5.hex_md5(publishers.auth.profile.email);
+  var profile = publishers.getProfile();
+  var hash = MD5.hex_md5(profile.email);
 
   $('header section.session img.avatar')
     .attr('src', 'https://www.gravatar.com/avatar/' + hash);
   $('header .session .username')
-    .text(publishers.auth.profile.name);
+    .text(profile.name);
 
   publisher.list('', function (err, resources) {
     if ('index.html' in resources) {
@@ -75,13 +76,15 @@ function firstRun (publisher) {
 
 function addEntry (publisher, data) {
 
-  if (publishers.auth.profile.email) {
-    var hash = MD5.hex_md5(publishers.auth.profile.email);
+  var profile = publishers.getProfile();
+
+  if (profile.email) {
+    var hash = MD5.hex_md5(profile.email);
     author.avatar = 'https://www.gravatar.com/avatar/' + hash;
   }
-  author.email = publishers.auth.profile.email;
-  author.nickname = publishers.auth.profile.user_id;
-  author.name = publishers.auth.profile.name;
+  author.email = profile.email;
+  author.nickname = profile.user_id;
+  author.name = profile.name;
   author.url = $('header .session .username').attr('href');
 
   data.author = data.author || author;

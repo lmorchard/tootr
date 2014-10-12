@@ -3,7 +3,7 @@ var _ = require('underscore');
 var misc = require('../misc');
 var S3Ajax = require('S3Ajax');
 
-// AmazonS3 app config, partially host-based
+// AmazonS3Publisher app config, partially host-based
 // TODO: Make this user-configurable - in localstorage?
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
@@ -33,18 +33,14 @@ var config = _.extend({
 }[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
-  var AmazonS3 = baseModule();
+  var AmazonS3Publisher = baseModule();
 
   // Set up the Login with Amazon button
   // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
   window.onAmazonLoginReady = function() {
     amazon.Login.setClientId(config.CLIENT_ID);
     $('#LoginWithAmazon').click(function () {
-      AmazonS3.startLogin();
-      return false;
-    });
-    $('#LogoutWithAmazon').click(function () {
-      AmazonS3.startLogout();
+      AmazonS3Publisher.startLogin();
       return false;
     });
   };
@@ -55,42 +51,23 @@ module.exports = function (publishers, baseModule) {
     d.getElementById('amazon-root').appendChild(a);
   })(document);
 
-  AmazonS3.startLogin = function () {
+  AmazonS3Publisher.startLogin = function () {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
-      location.pathname + '?loginType=AmazonS3';
+      location.pathname + '?loginType=AmazonS3Publisher';
     amazon.Login.authorize(options, redir);
   },
 
-  AmazonS3.finishLogin = function () {
+  AmazonS3Publisher.finishLogin = function () {
     var qparams = misc.getQueryParameters();
     if (!qparams.access_token) { return; }
-    AmazonS3.refreshCredentials(qparams.access_token);
+    AmazonS3Publisher.refreshCredentials(qparams.access_token);
   };
 
-  AmazonS3.checkAuth = function (auth) {
-    var now = new Date();
-    var expiration = new Date(auth.credentials.Expiration);
-    if (now < expiration) {
-      console.log("Amazon token expires in " +
-          (expiration.getTime() - now.getTime()) / 1000 +
-          " seconds.");
-      publishers.setCurrent(new AmazonS3(auth));
-    } else {
-      AmazonS3.refreshCredentials(auth.access_token, function (err, auth) {
-        if (err) {
-          publishers.clearCurrent();
-        } else {
-          publishers.setCurrent(new AmazonS3(auth));
-        }
-      });
-    }
-  };
-
-  AmazonS3.refreshCredentials = function (access_token, cb) {
+  AmazonS3Publisher.refreshCredentials = function (access_token, cb) {
     var auth = {
-      type: 'AmazonS3',
+      type: 'AmazonS3Publisher',
       access_token: access_token
     };
     $.ajax({
@@ -98,7 +75,7 @@ module.exports = function (publishers, baseModule) {
       headers: { 'Authorization': 'bearer ' + access_token }
     }).then(function (profile, status, xhr) {
 
-      auth.profile = profile;
+      _.extend(auth, profile);
 
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
         'Action': 'AssumeRoleWithWebIdentity',
@@ -119,30 +96,58 @@ module.exports = function (publishers, baseModule) {
         .Credentials;
 
       auth.credentials = credentials;
-      publishers.setAuth(auth);
+      publishers.setProfile(auth);
+      publishers.setCurrent(new AmazonS3Publisher(auth));
 
       if (cb) { cb(null, auth); }
-
     }).fail(function (xhr, status, err) {
 
-      publishers.clearAuth();
+      publishers.clearCurrent();
       if (cb) { cb(err, null); }
 
     });
-  },
-
-  AmazonS3.startLogout = function () {
-    publishers.clearAuth();
-    amazon.Login.logout();
-    location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') +
-      location.pathname;
   };
 
-  AmazonS3.prototype.init = function (options) {
-    AmazonS3.__base__.init.apply(this, arguments);
+  AmazonS3Publisher.checkAuth = function (cb) {
+    var auth = publishers.getProfile();
 
-    var profile = this.options.profile;
+    if (!auth) {
+      var qparams = misc.getQueryParameters();
+      if ('loginType' in qparams && qparams.loginType === 'AmazonS3Publisher') {
+        AmazonS3Publisher.finishLogin();
+        var clean_loc = location.protocol + '//' + location.hostname +
+          (location.port ? ':' + location.port : '') + location.pathname;
+        history.replaceState({}, '', clean_loc);
+      }
+      return cb();
+    }
+
+    var now = new Date();
+    var expiration = new Date(auth.credentials.Expiration);
+    if (now < expiration) {
+      console.log("Amazon token expires in " +
+          (expiration.getTime() - now.getTime()) / 1000 +
+          " seconds.");
+      publishers.setProfile(auth);
+      publishers.setCurrent(new AmazonS3Publisher(auth));
+      return cb(null);
+    } else {
+      AmazonS3Publisher.refreshCredentials(auth.access_token, function (err, auth) {
+        if (err) {
+          publishers.clearCurrent();
+        } else {
+          publishers.setProfile(auth);
+          publishers.setCurrent(new AmazonS3Publisher(auth));
+        }
+        return cb(null);
+      });
+    }
+
+  };
+
+  AmazonS3Publisher.prototype.init = function (options) {
+    AmazonS3Publisher.__base__.init.apply(this, arguments);
+
     var credentials = this.options.credentials;
 
     this.client = new S3Ajax({
@@ -153,7 +158,7 @@ module.exports = function (publishers, baseModule) {
       defeat_cache: true
     });
 
-    this.prefix = 'users/amazon/' + profile.user_id + '/';
+    this.prefix = 'users/amazon/' + this.options.user_id + '/';
 
     $('body').addClass('logged-in-amazon');
 
@@ -161,7 +166,15 @@ module.exports = function (publishers, baseModule) {
     $('header .session .username').attr('href', link)
   };
 
-  AmazonS3.prototype.list = function (path, cb) {
+  AmazonS3Publisher.prototype.startLogout = function () {
+    amazon.Login.logout();
+    publishers.clearProfile();
+    location.href = location.protocol + '//' + location.hostname +
+      (location.port ? ':' + location.port : '') +
+      location.pathname;
+  };
+
+  AmazonS3Publisher.prototype.list = function (path, cb) {
     var prefix = this.prefix + path;
     this.client.listKeys(
       config.BUCKET,
@@ -180,7 +193,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3.prototype.get = function (path, cb) {
+  AmazonS3Publisher.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -188,7 +201,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3.prototype.rm = function (path, cb) {
+  AmazonS3Publisher.prototype.rm = function (path, cb) {
     this.client.deleteKey(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -196,7 +209,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3.prototype.put = function (path, content, cb) {
+  AmazonS3Publisher.prototype.put = function (path, content, cb) {
     var ext = path.substr(path.lastIndexOf('.')+1);
     var types = {
       'html': 'text/html; charset=UTF-8',
@@ -264,5 +277,5 @@ module.exports = function (publishers, baseModule) {
 
   };
 
-  return AmazonS3;
+  return AmazonS3Publisher;
 };
