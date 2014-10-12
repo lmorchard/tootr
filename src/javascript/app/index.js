@@ -1,7 +1,7 @@
-var crypto = require('crypto');
+var MD5 = require('MD5');
 
-require('timeago');
 var $ = require('jquery');
+require('timeago');
 var _ = require('underscore');
 var PubSub = require('pubsub-js');
 var async = require('async');
@@ -23,8 +23,7 @@ module.exports = function () {
 var docIndex = document.implementation.createHTMLDocument('');
 
 function setup (msg, publisher) {
-  var hash = crypto.createHash('md5')
-    .update(publishers.auth.profile.email).digest('hex');
+  var hash = MD5.hex_md5(publishers.auth.profile.email);
 
   $('header section.session img.avatar')
     .attr('src', 'https://www.gravatar.com/avatar/' + hash);
@@ -77,8 +76,7 @@ function firstRun (publisher) {
 function addEntry (publisher, data) {
 
   if (publishers.auth.profile.email) {
-    var hash = crypto.createHash('md5')
-      .update(publishers.auth.profile.email).digest('hex');
+    var hash = MD5.hex_md5(publishers.auth.profile.email);
     author.avatar = 'https://www.gravatar.com/avatar/' + hash;
   }
   author.email = publishers.auth.profile.email;

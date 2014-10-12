@@ -10,11 +10,6 @@
     "server-watch": "./node_modules/.bin/supervisor src/javascript/server.js",
     "start": "node src/javascript/server.js"
   },
-  "browser": {
-    "underscore": "backbone/node_modules/underscore",
-    "timeago": "./src/javascript/vendor/jquery.timeago.js",
-    "S3Ajax": "./src/javascript/vendor/S3Ajax.js"
-  },
   "browserify": {
     "transform": [
       "browserify-shim",
@@ -22,16 +17,20 @@
       "hbsfy"
     ]
   },
+  "browser": {
+    "timeago": "./src/javascript/vendor/jquery.timeago.js",
+    "S3Ajax": "./src/javascript/vendor/S3Ajax.js",
+    "MD5": "./src/javascript/vendor/md5.js"
+  },
   "browserify-shim": {
     "timeago": {
-      "exports": "timeago",
-      "depends": [
-        "jquery:jQuery"
-      ]
+      "exports": null,
+      "depends": [ "jquery:jQuery" ]
     },
     "S3Ajax": {
       "exports": "S3Ajax"
-    }
+    },
+    "MD5": "MD5"
   },
   "devDependencies": {
     "browser-sync": "~1.3.6",
