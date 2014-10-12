@@ -7,7 +7,7 @@ var config = _.extend({
     APP_KEY: 'ovvlu8dh78f0j2m'
   },
   "lmorchard.github.io": {
-    APP_KEY: ' ... '
+    APP_KEY: 'w9p1vvnppuhsqzk'
   }
 }[location.hostname]);
 
