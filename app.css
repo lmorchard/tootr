@@ -16,9 +16,8 @@ body > section#wrapper >header img {
 }
 body > section#wrapper >header .login {
   display: none;
-  position: absolute;
-  top: 0em;
-  right: 0em;
+  margin: 1em auto;
+  text-align: center;
 }
 body > section#wrapper >header .session {
   font-size: 0.85em;

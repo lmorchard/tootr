@@ -11,11 +11,15 @@ if (body.hasClass('index')) {
 }
 
 PubSub.subscribe('publishers.setCurrent', function (msg, publisher) {
-  $('body').addClass('logged-in').removeClass('logged-out');
+  $('body')
+    .addClass('logged-in')
+    .removeClass('logged-out');
 });
 
 PubSub.subscribe('publishers.clearCurrent', function (msg) {
-  $('body').removeClass('logged-in').addClass('logged-out');
+  $('body')
+    .removeClass('logged-in')
+    .addClass('logged-out');
 });
 
 $('button#logout').click(publishers.logout);
@@ -3355,44 +3359,42 @@ https://github.com/mroderick/PubSubJS
 (function (global){
 var MD5 = require('MD5');
 
-var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
-require('timeago');
 var _ = require('underscore');
 var PubSub = require('pubsub-js');
 var async = require('async');
+var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+require('timeago');
 
 var publishers = require('../publishers');
-
 var hentry = require('../../templates/hentry');
-
-var author = {
-  url: "http://lmorchard.com",
-  name: "Les Orchard",
-  nickname: "lmorchard"
-};
 
 module.exports = function () {
   PubSub.subscribe('publishers.setCurrent', setup);
+  PubSub.subscribe('publishers.clearCurrent', teardown);
 };
 
+var author = { };
+
+// Hidden document used to produce HTML for publishing
 var docIndex = document.implementation.createHTMLDocument('');
 
 function setup (msg, publisher) {
   var profile = publishers.getProfile();
-  var hash = MD5.hex_md5(profile.email);
 
-  $('header section.session img.avatar')
-    .attr('src', 'https://www.gravatar.com/avatar/' + hash);
-  $('header .session .username')
-    .text(profile.name);
+  if (profile.avatar) {
+    author.avatar = profile.avatar;
+  } else {
+    var hash = MD5.hex_md5(profile.email);
+    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
+  }
+  author.email = profile.email;
+  author.nickname = profile.nickname;
+  author.name = profile.name;
+  author.url = profile.url;
 
-  publisher.list('', function (err, resources) {
-    if ('index.html' in resources) {
-      return loadToots(publisher);
-    } else {
-      return firstRun(publisher);
-    }
-  });
+  $('header .session .username').attr('href', author.url)
+  $('header .session img.avatar').attr('src', author.avatar);
+  $('header .session .username').text(author.name);
 
   $('form#toot').each(function () {
     var f = $(this);
@@ -3406,6 +3408,22 @@ function setup (msg, publisher) {
       return false;
     });
   });
+
+  publisher.list('', function (err, resources) {
+    if (err) {
+      console.log("LIST ERR " + err);
+      return;
+    }
+    if ('index.html' in resources) {
+      return loadToots(publisher);
+    } else {
+      return firstRun(publisher);
+    }
+  });
+}
+
+function teardown (msg) {
+  $('#entries').empty();
 }
 
 function firstRun (publisher) {
@@ -3430,22 +3448,9 @@ function firstRun (publisher) {
 }
 
 function addEntry (publisher, data) {
-
-  var profile = publishers.getProfile();
-
-  if (profile.email) {
-    var hash = MD5.hex_md5(profile.email);
-    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
-  }
-  author.email = profile.email;
-  author.nickname = profile.user_id;
-  author.name = profile.name;
-  author.url = $('header .session .username').attr('href');
-
   data.author = data.author || author;
-
   data.published = data.published || (new Date()).toISOString();
-  data.id = Date.now() + '-' + _.random(0, 100);
+  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
   data.permalink = '#' + data.id;
 
   var entry = $(hentry(data));
@@ -3456,30 +3461,62 @@ function addEntry (publisher, data) {
 }
 
 function loadToots (publisher) {
+
+  // Fetch the toots from the publisher.
   publisher.get('index.html', function (err, content) {
+
+    // Load the toot source into hidden source document
     docIndex.documentElement.innerHTML = content;
+
+    // Clean out the destination.
     var dest = document.querySelector('#entries');
+    while (dest.firstChild) {
+      dest.removeChild(dest.firstChild);
+    }
+
+    // Copy entry nodes from source to destination.
     var src = docIndex.querySelector('#entries');
     for (var i=0; i<src.childNodes.length; i++) {
       dest.appendChild(src.childNodes[i].cloneNode(true));
     }
+
+    // Make the timestamps all fancy!
     $('time.timeago').timeago();
+
   });
+
 }
 
 function saveToots (publisher) {
+
+  // Clean out the destination
   var dest = docIndex.querySelector('#entries');
   while (dest.firstChild) {
     dest.removeChild(dest.firstChild);
   }
+
+  // Copy entry nodes from source to destination
   var src = document.querySelector('#entries');
   for (var i=0; i<src.childNodes.length; i++) {
     dest.appendChild(src.childNodes[i].cloneNode(true));
   }
+
+  // Clean up any .ui-only elements used for editing & etc.
+  var ui = docIndex.querySelectorAll('.ui-only');
+  for (var i=0; i<ui.length; i++) {
+      ui[i].parentNode.removeChild(ui[i]);
+  };
+
+  // Serialize the HTML and publish it!
   var content = docIndex.documentElement.outerHTML;
   publisher.put('index.html', content, function (err) {
-    console.log("Saved toots " + err);
+    if (err) {
+      console.log("ERROR SAVING TOOTS " + err);
+    } else {
+      console.log("Saved toots");
+    }
   });
+
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -3567,29 +3604,25 @@ publishers.checkAuth = function () {
   });
 };
 
-publishers.setProfile = function (profile) {
-  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
-};
-
 publishers.getProfile = function () {
   var profile = null;
-  try { profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY)); }
-  catch (e) { /* No-op */ }
+  try {
+    profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
+  } catch (e) {
+    /* No-op */
+  }
   return profile;
 }
 
-publishers.clearProfile = function (profile) {
-  localStorage.removeItem(LOCAL_PROFILE_KEY);
-};
-
-publishers.setCurrent = function (publisher) {
+publishers.setCurrent = function (profile, publisher) {
+  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
   publishers.current = publisher;
   PubSub.publish('publishers.setCurrent', publisher);
 };
 
 publishers.clearCurrent = function () {
   publishers.current = null;
-  publishers.clearProfile();
+  localStorage.removeItem(LOCAL_PROFILE_KEY);
   PubSub.publish('publishers.clearCurrent');
 }
 
@@ -3661,46 +3694,68 @@ var config = _.extend({
 module.exports = function (publishers, baseModule) {
   var AmazonS3Publisher = baseModule();
 
-  // Set up the Login with Amazon button
-  // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
-  window.onAmazonLoginReady = function() {
-    amazon.Login.setClientId(config.CLIENT_ID);
-    $('#LoginWithAmazon').click(function () {
-      AmazonS3Publisher.startLogin();
-      return false;
-    });
-  };
-  (function(d) {
-    var a = d.createElement('script'); a.type = 'text/javascript';
-    a.async = true; a.id = 'amazon-login-sdk';
-    a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
-    d.getElementById('amazon-root').appendChild(a);
-  })(document);
+  setupAmazonLoginButton();
 
   AmazonS3Publisher.startLogin = function () {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
-      location.pathname + '?loginType=AmazonS3Publisher';
+      location.pathname + '?loginType=AmazonS3';
     amazon.Login.authorize(options, redir);
-  },
+  };
 
-  AmazonS3Publisher.finishLogin = function () {
-    var qparams = misc.getQueryParameters();
-    if (!qparams.access_token) { return; }
-    AmazonS3Publisher.refreshCredentials(qparams.access_token);
+  AmazonS3Publisher.checkAuth = function (cb) {
+    var auth = publishers.getProfile();
+
+    // If we don't have an auth profile, it's possible that we've just received
+    // an access token on the redirect side of login.
+    if (!auth) {
+      var qparams = misc.getQueryParameters();
+      if (qparams.loginType === 'AmazonS3') {
+        var qparams = misc.getQueryParameters();
+        if (qparams.access_token) {
+          AmazonS3Publisher.refreshCredentials(qparams.access_token);
+          // Clean out the auth redirect parameters from location
+          history.replaceState({}, '', location.protocol + '//' +
+              location.hostname + (location.port ? ':' + location.port : '') +
+              location.pathname);
+        }
+      }
+      return cb();
+    }
+
+    // We have an auth profile, but it's not ours.
+    if (auth.type !== 'AmazonS3') { return cb(); }
+
+    // We have an auth profile, but it could have expired. Refresh, if so.
+    var now = new Date();
+    var expiration = new Date(auth.credentials.Expiration);
+    if (now >= expiration) {
+      AmazonS3Publisher.refreshCredentials(auth.access_token);
+      return cb();
+    }
+
+    // Looks like we have a fresh auth profile, so just go ahead and use it.
+    publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+    return cb();
   };
 
   AmazonS3Publisher.refreshCredentials = function (access_token, cb) {
     var auth = {
-      type: 'AmazonS3Publisher',
+      type: 'AmazonS3',
       access_token: access_token
     };
+
     $.ajax({
       url: 'https://api.amazon.com/user/profile',
-      headers: { 'Authorization': 'bearer ' + access_token }
+      headers: {
+        'Authorization': 'bearer ' + access_token
+      }
     }).then(function (profile, status, xhr) {
 
+      profile.nickname = profile.user_id;
+      profile.url = config.BUCKET_BASE_URL + 'users/amazon/' +
+        profile.user_id + '/' + 'index.html';
       _.extend(auth, profile);
 
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
@@ -3715,67 +3770,24 @@ module.exports = function (publishers, baseModule) {
 
     }).then(function (dataXML, status, xhr) {
 
-      var data = misc.xmlToObj(dataXML);
-      var credentials = data
+      auth.credentials = misc.xmlToObj(dataXML)
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
+      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
 
-      auth.credentials = credentials;
-      publishers.setProfile(auth);
-      publishers.setCurrent(new AmazonS3Publisher(auth));
-
-      if (cb) { cb(null, auth); }
     }).fail(function (xhr, status, err) {
 
       publishers.clearCurrent();
-      if (cb) { cb(err, null); }
 
     });
-  };
-
-  AmazonS3Publisher.checkAuth = function (cb) {
-    var auth = publishers.getProfile();
-
-    if (!auth) {
-      var qparams = misc.getQueryParameters();
-      if ('loginType' in qparams && qparams.loginType === 'AmazonS3Publisher') {
-        AmazonS3Publisher.finishLogin();
-        var clean_loc = location.protocol + '//' + location.hostname +
-          (location.port ? ':' + location.port : '') + location.pathname;
-        history.replaceState({}, '', clean_loc);
-      }
-      return cb();
-    }
-
-    var now = new Date();
-    var expiration = new Date(auth.credentials.Expiration);
-    if (now < expiration) {
-      console.log("Amazon token expires in " +
-          (expiration.getTime() - now.getTime()) / 1000 +
-          " seconds.");
-      publishers.setProfile(auth);
-      publishers.setCurrent(new AmazonS3Publisher(auth));
-      return cb(null);
-    } else {
-      AmazonS3Publisher.refreshCredentials(auth.access_token, function (err, auth) {
-        if (err) {
-          publishers.clearCurrent();
-        } else {
-          publishers.setProfile(auth);
-          publishers.setCurrent(new AmazonS3Publisher(auth));
-        }
-        return cb(null);
-      });
-    }
-
   };
 
   AmazonS3Publisher.prototype.init = function (options) {
     AmazonS3Publisher.__base__.init.apply(this, arguments);
 
     var credentials = this.options.credentials;
-
+    this.prefix = 'users/amazon/' + this.options.user_id + '/';
     this.client = new S3Ajax({
       base_url: config.S3_BASE_URL,
       key_id: credentials.AccessKeyId,
@@ -3783,21 +3795,11 @@ module.exports = function (publishers, baseModule) {
       security_token: credentials.SessionToken,
       defeat_cache: true
     });
-
-    this.prefix = 'users/amazon/' + this.options.user_id + '/';
-
-    $('body').addClass('logged-in-amazon');
-
-    var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
-    $('header .session .username').attr('href', link)
   };
 
   AmazonS3Publisher.prototype.startLogout = function () {
     amazon.Login.logout();
-    publishers.clearProfile();
-    location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') +
-      location.pathname;
+    publishers.clearCurrent();
   };
 
   AmazonS3Publisher.prototype.list = function (path, cb) {
@@ -3903,6 +3905,24 @@ module.exports = function (publishers, baseModule) {
 
   };
 
+  function setupAmazonLoginButton () {
+    // Set up the Login with Amazon button
+    // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
+    window.onAmazonLoginReady = function() {
+      amazon.Login.setClientId(config.CLIENT_ID);
+      $('#LoginWithAmazon').click(function () {
+        AmazonS3Publisher.startLogin();
+        return false;
+      });
+    };
+    (function(d) {
+      var a = d.createElement('script'); a.type = 'text/javascript';
+      a.async = true; a.id = 'amazon-login-sdk';
+      a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
+      d.getElementById('amazon-root').appendChild(a);
+    })(document);
+  }
+
   return AmazonS3Publisher;
 };
 
@@ -3952,7 +3972,8 @@ module.exports = function (publishers, baseModule) {
         if (!profile) {
           DropboxPublisher.loadProfile(client);
         } else {
-          publishers.setCurrent(new DropboxPublisher({ client: client }));
+          var publisher = new DropboxPublisher({ client: client });
+          publishers.setCurrent(profile, publisher);
         }
       }
       return cb(null);
@@ -3962,9 +3983,10 @@ module.exports = function (publishers, baseModule) {
   DropboxPublisher.loadProfile = function (client) {
     client.getAccountInfo({}, function (err, profile) {
       profile.type = 'Dropbox';
-      profile.user_id = profile.uid;
-      publishers.setProfile(profile);
-      publishers.setCurrent(new DropboxPublisher({ client: client }));
+      profile.nickname = profile.uid;
+
+      var publisher = new DropboxPublisher({ client: client });
+      publishers.setCurrent(profile, publisher);
     });
   };
 
@@ -3977,9 +3999,7 @@ module.exports = function (publishers, baseModule) {
   DropboxPublisher.prototype.startLogout = function () {
     if (!publishers.current) { return; }
     publishers.current.client.signOut();
-    location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') +
-      location.pathname;
+    publishers.clearCurrent();
   };
 
   DropboxPublisher.prototype.list = function (path, cb) {
@@ -4013,51 +4033,210 @@ module.exports = function (publishers, baseModule) {
 (function (global){
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var _ = require('underscore');
+var misc = require('../misc');
+
+var config = _.extend({
+  API_BASE: 'https://api.github.com/',
+  API_SCOPE: ['user:email', 'repo', 'gist'],
+  BRANCH_NAME: 'gh-pages'
+}, {
+  "localhost": {
+    CLIENT_ID: '6d59b16e660e246d3ee5',
+    AUTHENTICATE_URL: 'https://localhost:9443/github/authenticate/',
+    REPO_NAME: 'toots-dev'
+  },
+  "lmorchard.github.io": {
+    CLIENT_ID: '62a54438d65933d8dc8d',
+    AUTHENTICATE_URL: 'https://tootr.herokuapp.com/github/authenticate/',
+    REPO_NAME: 'toots'
+  }
+}[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
   var GithubPublisher = baseModule();
 
   $('#LoginWithGithub').click(function () {
-  /*
-    location.href = "https://github.com/login/oauth/authorize?" + $.param({
-      client_id: gh_oauth.client_id,
-      redirect_uri: gh_oauth.redirect_uri,
-      scope: gh_oauth.scope.join(','),
-      state: Date.now() + '-' + Math.random()
-    });
-  */
+    GithubPublisher.startLogin();
   });
 
   GithubPublisher.startLogin = function () {
+    location.href = "https://github.com/login/oauth/authorize?" + $.param({
+      client_id: config.CLIENT_ID,
+      scope: config.API_SCOPE.join(','),
+      state: Date.now() + '-' + Math.random()
+    });
   };
 
   GithubPublisher.checkAuth = function (cb) {
-    cb(null);
+    var profile = publishers.getProfile();
+
+    // If we don't have an auth profile, it's possible that we've just received
+    // an access token on the redirect side of login.
+    if (!profile) {
+      var qparams = misc.getQueryParameters();
+      if (qparams.loginType === 'Github') {
+        var qparams = misc.getQueryParameters();
+        if (qparams.code) {
+          $.getJSON(config.AUTHENTICATE_URL + qparams.code, function(data) {
+            GithubPublisher.refreshCredentials(data.token);
+            // Clean out the auth redirect parameters from location
+            history.replaceState({}, '', location.protocol + '//' +
+                location.hostname + (location.port ? ':' + location.port : '') +
+                location.pathname);
+          });
+        }
+      }
+      return cb();
+    }
+
+    // We have an auth profile, but it's not ours.
+    if (profile.type !== 'Github') { return cb(); }
+
+    // Looks like we have a fresh auth profile, so just go ahead and use it.
+    publishers.setCurrent(profile, new GithubPublisher(profile));
+    return cb();
   };
 
-  GithubPublisher.startLogout = function () {
+  GithubPublisher.refreshCredentials = function (access_token) {
+    var profile = {
+      access_token: access_token
+    };
+    $.ajax({
+      type: 'GET',
+      url: config.API_BASE + 'user',
+      headers: { authorization: 'token ' + access_token }
+    }).then(function (data, status, xhr) {
+      _.extend(profile, data);
+      profile.type = 'Github';
+      profile.nickname = data.login;
+      profile.url = data.html_url;
+      profile.avatar = data.avatar_url;
+      publishers.setCurrent(profile, new GithubPublisher(profile));
+    }).fail(function (xhr, status, err) {
+      publishers.clearCurrent();
+    });
   };
 
   GithubPublisher.prototype.init = function (options) {
+    GithubPublisher.__base__.init.apply(this, arguments);
+
+    this.contents_base_url = config.API_BASE + 'repos/' + this.options.login +
+      '/' + config.REPO_NAME + '/contents/';
+  };
+
+  GithubPublisher.prototype.startLogout = function () {
+    publishers.clearCurrent();
   };
 
   GithubPublisher.prototype.list = function (path, cb) {
+    $.ajax({
+      type: 'GET',
+      url: this.contents_base_url + path + '?ref=' + config.BRANCH_NAME,
+      headers: { authorization: 'token ' + this.options.access_token }
+    }).then(function (data, status, xhr) {
+      var out = {};
+      if (_.isArray(data)) {
+        data.forEach(function (item) {
+          out[item.name] = item;
+        });
+      }
+      return cb(null, out);
+    }).fail(function (xhr, status, err) {
+      return cb(xhr.responseText, null);
+    });
   };
 
   GithubPublisher.prototype.get = function (path, cb) {
+    $.ajax({
+      type: 'GET',
+      url: this.contents_base_url + path + '?ref=' + config.BRANCH_NAME,
+      headers: { authorization: 'token ' + this.options.access_token }
+    }).then(function (data, status, xhr) {
+      if (_.isObject(data)) {
+        return cb(null, atob(data.content));
+      } else {
+        return cb('not a file', null);
+      }
+    }).fail(function (xhr, status, err) {
+      return cb(err, null);
+    });
   };
 
   GithubPublisher.prototype.put = function (path, content, cb) {
+    var $this = this;
+
+    // Need to first attempt a GET, to see if the resource exists. If so, then
+    // we can use the SHA hash to replace it with PUT. Otherwise, we're
+    // creating a new resource.
+    $.ajax({
+      type: 'GET',
+      url: $this.contents_base_url + path + '?ref=' + config.BRANCH_NAME,
+      headers: { authorization: 'token ' + $this.options.access_token }
+    }).done(function (data, status, xhr) {
+
+      var params = {
+        branch: config.BRANCH_NAME,
+        message: 'Updated at ' + (new Date().toISOString()),
+        content: btoa(content)
+      };
+      if (data.sha) {
+        params.sha = data.sha;
+      }
+
+      $.ajax({
+        type: 'PUT',
+        url: $this.contents_base_url + path,
+        headers: { authorization: 'token ' + $this.options.access_token },
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(params)
+      }).then(function (data, status, xhr) {
+        return cb(null, data);
+      }).fail(function (xhr, status, err) {
+        return cb(err, null);
+      });
+
+    });
   };
 
   GithubPublisher.prototype.rm = function (path, cb) {
+    var $this = this;
+
+    // Again, need to attempt a GET first to find the SHA hash. If found, then
+    // we can delete.
+    $.ajax({
+      type: 'GET',
+      url: $this.contents_base_url + path + '?ref=' + config.BRANCH_NAME,
+      headers: { authorization: 'token ' + $this.options.access_token }
+    }).done(function (data, status, xhr) {
+      if (!data.sha) {
+        return cb('not found', null);
+      }
+      var params = {
+        branch: config.BRANCH_NAME,
+        message: 'Updated at ' + (new Date().toISOString()),
+        sha: data.sha
+      };
+      $.ajax({
+        type: 'DELETE',
+        url: $this.contents_base_url + path,
+        headers: { authorization: 'token ' + $this.options.access_token },
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(params)
+      }).then(function (data, status, xhr) {
+        return cb(null, data);
+      }).fail(function (xhr, status, err) {
+        return cb(err, null);
+      });
+    });
   };
 
   return GithubPublisher;
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
+},{"../misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 //  S3Ajax v0.1 - An AJAX wrapper package for Amazon S3
@@ -5463,7 +5642,11 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
 
 
-  buffer += "<section class=\"h-entry\">\n\n  <header>\n    <span class=\"h-card\">\n      <a class=\"u-url\" href=\""
+  buffer += "<section class=\"h-entry\" id=\"";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "\">\n\n  <header>\n    <span class=\"h-card\">\n      <a class=\"u-url\" href=\""
     + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.url)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
     + "\">\n        <img class=\"u-photo\" src=\""
     + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.avatar)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
@@ -5487,7 +5670,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   if (helper = helpers.content) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.content); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
-    + "</p>\n\n  <footer>\n  </footer>\n\n</section>\n";
+    + "</p>\n\n</section>\n";
   return buffer;
   });
 
