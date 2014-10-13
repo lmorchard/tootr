@@ -41,7 +41,7 @@ module.exports = function (publishers, baseModule) {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
-      location.pathname + '?loginType=AmazonS3Publisher';
+      location.pathname + '?loginType=AmazonS3';
     amazon.Login.authorize(options, redir);
   };
 
@@ -52,7 +52,7 @@ module.exports = function (publishers, baseModule) {
     // an access token on the redirect side of login.
     if (!auth) {
       var qparams = misc.getQueryParameters();
-      if (qparams.loginType === 'AmazonS3Publisher') {
+      if (qparams.loginType === 'AmazonS3') {
         var qparams = misc.getQueryParameters();
         if (qparams.access_token) {
           AmazonS3Publisher.refreshCredentials(qparams.access_token);
@@ -64,6 +64,9 @@ module.exports = function (publishers, baseModule) {
       }
       return cb();
     }
+
+    // We have an auth profile, but it's not ours.
+    if (auth.type !== 'AmazonS3') { return cb(); }
 
     // We have an auth profile, but it could have expired. Refresh, if so.
     var now = new Date();
@@ -80,7 +83,7 @@ module.exports = function (publishers, baseModule) {
 
   AmazonS3Publisher.refreshCredentials = function (access_token, cb) {
     var auth = {
-      type: 'AmazonS3Publisher',
+      type: 'AmazonS3',
       access_token: access_token
     };
 

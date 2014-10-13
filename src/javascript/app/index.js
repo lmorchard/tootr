@@ -51,6 +51,10 @@ function setup (msg, publisher) {
   });
 
   publisher.list('', function (err, resources) {
+    if (err) {
+      console.log("LIST ERR " + err);
+      return;
+    }
     if ('index.html' in resources) {
       return loadToots(publisher);
     } else {

@@ -75,7 +75,6 @@ app.post('/amazon/presigned', function (req, res) {
 
 });
 
-/*
 app.get('/github/authenticate/:code', function(req, res) {
   console.log('github authenticating code:' + req.params.code);
   request({
@@ -85,7 +84,7 @@ app.get('/github/authenticate/:code', function(req, res) {
     body: qs.stringify({
       client_id: config.github_oauth_client_id,
       client_secret: config.github_oauth_client_secret,
-      code: code
+      code: req.params.code
     })
   }, function (err, resp, body) {
     var token = body.access_token;
@@ -94,7 +93,6 @@ app.get('/github/authenticate/:code', function(req, res) {
     res.json(result);
   });
 });
-*/
 
 var port = process.env.PORT || config.port || 9000;
 
