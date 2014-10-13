@@ -139,14 +139,13 @@ module.exports = function (publishers, baseModule) {
       type: 'GET',
       url: $this.contents_base_url + path + '?ref=' + config.BRANCH_NAME,
       headers: { authorization: 'token ' + $this.options.access_token }
-    }).done(function (data, status, xhr) {
-
+    }).always(function (data, status, xhr) {
       var params = {
         branch: config.BRANCH_NAME,
         message: 'Updated at ' + (new Date().toISOString()),
         content: btoa(content)
       };
-      if (data.sha) {
+      if (status !== 'error' && data.sha) {
         params.sha = data.sha;
       }
 
