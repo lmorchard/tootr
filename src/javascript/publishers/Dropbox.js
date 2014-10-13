@@ -41,7 +41,8 @@ module.exports = function (publishers, baseModule) {
         if (!profile) {
           DropboxPublisher.loadProfile(client);
         } else {
-          publishers.setCurrent(new DropboxPublisher({ client: client }));
+          var publisher = new DropboxPublisher({ client: client });
+          publishers.setCurrent(profile, publisher);
         }
       }
       return cb(null);
@@ -52,8 +53,8 @@ module.exports = function (publishers, baseModule) {
     client.getAccountInfo({}, function (err, profile) {
       profile.type = 'Dropbox';
       profile.user_id = profile.uid;
-      publishers.setProfile(profile);
-      publishers.setCurrent(new DropboxPublisher({ client: client }));
+      var publisher = new DropboxPublisher({ client: client });
+      publishers.setCurrent(profile, publisher);
     });
   };
 

@@ -28,29 +28,25 @@ publishers.checkAuth = function () {
   });
 };
 
-publishers.setProfile = function (profile) {
-  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
-};
-
 publishers.getProfile = function () {
   var profile = null;
-  try { profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY)); }
-  catch (e) { /* No-op */ }
+  try {
+    profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
+  } catch (e) {
+    /* No-op */
+  }
   return profile;
 }
 
-publishers.clearProfile = function (profile) {
-  localStorage.removeItem(LOCAL_PROFILE_KEY);
-};
-
-publishers.setCurrent = function (publisher) {
+publishers.setCurrent = function (profile, publisher) {
+  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
   publishers.current = publisher;
   PubSub.publish('publishers.setCurrent', publisher);
 };
 
 publishers.clearCurrent = function () {
   publishers.current = null;
-  publishers.clearProfile();
+  localStorage.removeItem(LOCAL_PROFILE_KEY);
   PubSub.publish('publishers.clearCurrent');
 }
 

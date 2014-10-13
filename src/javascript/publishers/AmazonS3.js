@@ -96,10 +96,10 @@ module.exports = function (publishers, baseModule) {
         .Credentials;
 
       auth.credentials = credentials;
-      publishers.setProfile(auth);
-      publishers.setCurrent(new AmazonS3Publisher(auth));
+      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
 
       if (cb) { cb(null, auth); }
+
     }).fail(function (xhr, status, err) {
 
       publishers.clearCurrent();
@@ -128,16 +128,14 @@ module.exports = function (publishers, baseModule) {
       console.log("Amazon token expires in " +
           (expiration.getTime() - now.getTime()) / 1000 +
           " seconds.");
-      publishers.setProfile(auth);
-      publishers.setCurrent(new AmazonS3Publisher(auth));
+      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
       return cb(null);
     } else {
       AmazonS3Publisher.refreshCredentials(auth.access_token, function (err, auth) {
         if (err) {
           publishers.clearCurrent();
         } else {
-          publishers.setProfile(auth);
-          publishers.setCurrent(new AmazonS3Publisher(auth));
+          publishers.setCurrent(auth, new AmazonS3Publisher(auth));
         }
         return cb(null);
       });
@@ -160,15 +158,13 @@ module.exports = function (publishers, baseModule) {
 
     this.prefix = 'users/amazon/' + this.options.user_id + '/';
 
-    $('body').addClass('logged-in-amazon');
-
     var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
     $('header .session .username').attr('href', link)
   };
 
   AmazonS3Publisher.prototype.startLogout = function () {
     amazon.Login.logout();
-    publishers.clearProfile();
+    publishers.clearCurrent();
     location.href = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
       location.pathname;
