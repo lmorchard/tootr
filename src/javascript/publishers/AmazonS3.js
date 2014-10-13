@@ -35,21 +35,7 @@ var config = _.extend({
 module.exports = function (publishers, baseModule) {
   var AmazonS3Publisher = baseModule();
 
-  // Set up the Login with Amazon button
-  // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
-  window.onAmazonLoginReady = function() {
-    amazon.Login.setClientId(config.CLIENT_ID);
-    $('#LoginWithAmazon').click(function () {
-      AmazonS3Publisher.startLogin();
-      return false;
-    });
-  };
-  (function(d) {
-    var a = d.createElement('script'); a.type = 'text/javascript';
-    a.async = true; a.id = 'amazon-login-sdk';
-    a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
-    d.getElementById('amazon-root').appendChild(a);
-  })(document);
+  setupAmazonLoginButton();
 
   AmazonS3Publisher.startLogin = function () {
     options = { scope : 'profile' };
@@ -57,12 +43,39 @@ module.exports = function (publishers, baseModule) {
       (location.port ? ':' + location.port : '') +
       location.pathname + '?loginType=AmazonS3Publisher';
     amazon.Login.authorize(options, redir);
-  },
+  };
 
-  AmazonS3Publisher.finishLogin = function () {
-    var qparams = misc.getQueryParameters();
-    if (!qparams.access_token) { return; }
-    AmazonS3Publisher.refreshCredentials(qparams.access_token);
+  AmazonS3Publisher.checkAuth = function (cb) {
+    var auth = publishers.getProfile();
+
+    // If we don't have an auth profile, it's possible that we've just received
+    // an access token on the redirect side of login.
+    if (!auth) {
+      var qparams = misc.getQueryParameters();
+      if (qparams.loginType === 'AmazonS3Publisher') {
+        var qparams = misc.getQueryParameters();
+        if (qparams.access_token) {
+          AmazonS3Publisher.refreshCredentials(qparams.access_token);
+          // Clean out the auth redirect parameters from location
+          history.replaceState({}, '', location.protocol + '//' +
+              location.hostname + (location.port ? ':' + location.port : '') +
+              location.pathname);
+        }
+      }
+      return cb();
+    }
+
+    // We have an auth profile, but it could have expired. Refresh, if so.
+    var now = new Date();
+    var expiration = new Date(auth.credentials.Expiration);
+    if (now >= expiration) {
+      AmazonS3Publisher.refreshCredentials(auth.access_token);
+      return cb();
+    }
+
+    // Looks like we have a fresh auth profile, so just go ahead and use it.
+    publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+    return cb();
   };
 
   AmazonS3Publisher.refreshCredentials = function (access_token, cb) {
@@ -70,11 +83,17 @@ module.exports = function (publishers, baseModule) {
       type: 'AmazonS3Publisher',
       access_token: access_token
     };
+
     $.ajax({
       url: 'https://api.amazon.com/user/profile',
-      headers: { 'Authorization': 'bearer ' + access_token }
+      headers: {
+        'Authorization': 'bearer ' + access_token
+      }
     }).then(function (profile, status, xhr) {
 
+      profile.nickname = profile.user_id;
+      profile.url = config.BUCKET_BASE_URL + 'users/amazon/' +
+        profile.user_id + '/' + 'index.html';
       _.extend(auth, profile);
 
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
@@ -89,65 +108,24 @@ module.exports = function (publishers, baseModule) {
 
     }).then(function (dataXML, status, xhr) {
 
-      var data = misc.xmlToObj(dataXML);
-      var credentials = data
+      auth.credentials = misc.xmlToObj(dataXML)
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
-
-      auth.credentials = credentials;
       publishers.setCurrent(auth, new AmazonS3Publisher(auth));
-
-      if (cb) { cb(null, auth); }
 
     }).fail(function (xhr, status, err) {
 
       publishers.clearCurrent();
-      if (cb) { cb(err, null); }
 
     });
-  };
-
-  AmazonS3Publisher.checkAuth = function (cb) {
-    var auth = publishers.getProfile();
-
-    if (!auth) {
-      var qparams = misc.getQueryParameters();
-      if ('loginType' in qparams && qparams.loginType === 'AmazonS3Publisher') {
-        AmazonS3Publisher.finishLogin();
-        var clean_loc = location.protocol + '//' + location.hostname +
-          (location.port ? ':' + location.port : '') + location.pathname;
-        history.replaceState({}, '', clean_loc);
-      }
-      return cb();
-    }
-
-    var now = new Date();
-    var expiration = new Date(auth.credentials.Expiration);
-    if (now < expiration) {
-      console.log("Amazon token expires in " +
-          (expiration.getTime() - now.getTime()) / 1000 +
-          " seconds.");
-      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
-      return cb(null);
-    } else {
-      AmazonS3Publisher.refreshCredentials(auth.access_token, function (err, auth) {
-        if (err) {
-          publishers.clearCurrent();
-        } else {
-          publishers.setCurrent(auth, new AmazonS3Publisher(auth));
-        }
-        return cb(null);
-      });
-    }
-
   };
 
   AmazonS3Publisher.prototype.init = function (options) {
     AmazonS3Publisher.__base__.init.apply(this, arguments);
 
     var credentials = this.options.credentials;
-
+    this.prefix = 'users/amazon/' + this.options.user_id + '/';
     this.client = new S3Ajax({
       base_url: config.S3_BASE_URL,
       key_id: credentials.AccessKeyId,
@@ -155,19 +133,11 @@ module.exports = function (publishers, baseModule) {
       security_token: credentials.SessionToken,
       defeat_cache: true
     });
-
-    this.prefix = 'users/amazon/' + this.options.user_id + '/';
-
-    var link = config.BUCKET_BASE_URL + this.prefix + 'index.html';
-    $('header .session .username').attr('href', link)
   };
 
   AmazonS3Publisher.prototype.startLogout = function () {
     amazon.Login.logout();
     publishers.clearCurrent();
-    location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') +
-      location.pathname;
   };
 
   AmazonS3Publisher.prototype.list = function (path, cb) {
@@ -272,6 +242,24 @@ module.exports = function (publishers, baseModule) {
     });
 
   };
+
+  function setupAmazonLoginButton () {
+    // Set up the Login with Amazon button
+    // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
+    window.onAmazonLoginReady = function() {
+      amazon.Login.setClientId(config.CLIENT_ID);
+      $('#LoginWithAmazon').click(function () {
+        AmazonS3Publisher.startLogin();
+        return false;
+      });
+    };
+    (function(d) {
+      var a = d.createElement('script'); a.type = 'text/javascript';
+      a.async = true; a.id = 'amazon-login-sdk';
+      a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
+      d.getElementById('amazon-root').appendChild(a);
+    })(document);
+  }
 
   return AmazonS3Publisher;
 };

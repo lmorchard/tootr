@@ -52,7 +52,8 @@ module.exports = function (publishers, baseModule) {
   DropboxPublisher.loadProfile = function (client) {
     client.getAccountInfo({}, function (err, profile) {
       profile.type = 'Dropbox';
-      profile.user_id = profile.uid;
+      profile.nickname = profile.uid;
+
       var publisher = new DropboxPublisher({ client: client });
       publishers.setCurrent(profile, publisher);
     });
@@ -67,9 +68,7 @@ module.exports = function (publishers, baseModule) {
   DropboxPublisher.prototype.startLogout = function () {
     if (!publishers.current) { return; }
     publishers.current.client.signOut();
-    location.href = location.protocol + '//' + location.hostname +
-      (location.port ? ':' + location.port : '') +
-      location.pathname;
+    publishers.clearCurrent();
   };
 
   DropboxPublisher.prototype.list = function (path, cb) {

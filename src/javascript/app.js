@@ -9,11 +9,15 @@ if (body.hasClass('index')) {
 }
 
 PubSub.subscribe('publishers.setCurrent', function (msg, publisher) {
-  $('body').addClass('logged-in').removeClass('logged-out');
+  $('body')
+    .addClass('logged-in')
+    .removeClass('logged-out');
 });
 
 PubSub.subscribe('publishers.clearCurrent', function (msg) {
-  $('body').removeClass('logged-in').addClass('logged-out');
+  $('body')
+    .removeClass('logged-in')
+    .addClass('logged-out');
 });
 
 $('button#logout').click(publishers.logout);
