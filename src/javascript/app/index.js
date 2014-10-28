@@ -145,7 +145,7 @@ function saveToots (publisher) {
   // Clean up any .ui-only elements used for editing & etc.
   var ui = docIndex.querySelectorAll('.ui-only');
   for (var i=0; i<ui.length; i++) {
-      ui[i].parentNode.removeChild(ui[i]);
+    ui[i].parentNode.removeChild(ui[i]);
   };
 
   // Serialize the HTML and publish it!
@@ -155,6 +155,17 @@ function saveToots (publisher) {
       console.log("ERROR SAVING TOOTS " + err);
     } else {
       console.log("Saved toots");
+
+      $.ajax({
+        type: 'POST',
+        url: 'https://127.0.0.1:4443/api/ping',
+        data: { url: author.url }
+      }).then(function (data, status, xhr) {
+        console.log('Ping sent');
+      }).fail(function (xhr, status, err) {
+        console.error(err);
+      });
+
     }
   });
 
