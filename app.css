@@ -9,6 +9,17 @@ body #wrapper  >header .login {
   margin: 1em auto;
   text-align: center;
 }
+body #wrapper  >header .login > ul {
+  list-style-type: none;
+}
+body #wrapper  >header .login > ul > li {
+  padding: 1em;
+  border-top: 1px solid #888;
+}
+body #wrapper  >header .login > ul > li > form label {
+  width: 8ex;
+  text-align: right;
+}
 body #wrapper  >header .session {
   font-size: 0.85em;
   display: none;

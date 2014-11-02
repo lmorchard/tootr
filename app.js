@@ -3604,7 +3604,7 @@ var async = require('async');
 
 var publishers = module.exports = {};
 
-var LOCAL_PROFILE_KEY = 'profile20141005';
+var LOCAL_PROFILE_KEY = 'profile20141102';
 
 publishers.checkAuth = function () {
   var profile = publishers.getProfile();
@@ -3669,7 +3669,8 @@ var baseModule = function () {
 };
 
 var modules = {
-  'AmazonS3': require('./publishers/AmazonS3'),
+  'AmazonS3Bucket': require('./publishers/AmazonS3Bucket'),
+  'AmazonS3MultiUser': require('./publishers/AmazonS3MultiUser'),
   'Dropbox': require('./publishers/Dropbox'),
   'Github': require('./publishers/Github')
 };
@@ -3678,14 +3679,189 @@ for (var name in modules) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./publishers/AmazonS3":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3.js","./publishers/Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./publishers/Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3.js":[function(require,module,exports){
+},{"./publishers/AmazonS3Bucket":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js","./publishers/AmazonS3MultiUser":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js","./publishers/Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./publishers/Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js":[function(require,module,exports){
 (function (global){
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var _ = require('underscore');
 var misc = require('../misc');
 var S3Ajax = require('S3Ajax');
 
-// AmazonS3Publisher app config, partially host-based
+var AUTH_NAME = 'AmazonS3Bucket';
+
+var config = {
+  S3_BASE_URL: 'https://s3.amazonaws.com',
+};
+
+module.exports = function (publishers, baseModule) {
+  var AmazonS3BucketPublisher = baseModule();
+
+  // Wire up the login form.
+  $('#LoginWithAmazonBucket').click(function () {
+    var data = {
+      type: AUTH_NAME
+    };
+    $(this).parent('form').serializeArray().forEach(function (item) {
+      data[item.name] = item.value;
+    });
+    AmazonS3BucketPublisher.startLogin(data);
+    return false;
+  });
+
+  AmazonS3BucketPublisher.startLogin = function (auth) {
+    AmazonS3BucketPublisher.refreshAuth(auth, function (err) {
+      if (err) {
+        var msg = err.Message ? err.Message : JSON.stringify(err, null, '  ');
+        window.alert("Login failed: " + msg);
+      }
+    });
+  };
+
+  AmazonS3BucketPublisher.checkAuth = function (cb) {
+    var auth = publishers.getProfile();
+    if (!auth || auth.type !== AUTH_NAME) { return cb(); }
+    AmazonS3BucketPublisher.refreshAuth(auth, cb);
+  };
+
+  AmazonS3BucketPublisher.refreshAuth = function (auth, cb) {
+    // Try out a publisher with given credentials...
+    var publisher = new AmazonS3BucketPublisher(auth);
+    publisher.get('profile.json', function (err, profileData) {
+
+      if (err) {
+        if ('NoSuchKey' === err.Code) {
+          // Credentials worked, but there's no profile...
+          return AmazonS3BucketPublisher.startRegistration(publisher, cb);
+        } else {
+          // Credentials failed, so bail with an error.
+          publishers.clearCurrent();
+          return cb(err);
+        }
+      }
+
+      // Credentials worked, so we're good.
+      _.extend(auth, JSON.parse(profileData));
+      publishers.setCurrent(auth, publisher);
+      return cb();
+
+    });
+  };
+
+  AmazonS3BucketPublisher.startRegistration = function (publisher, cb) {
+    // Get a nickname from the user, bail if not provided.
+    // TODO: Rework this to not use a browser dialog.
+    var nickname = window.prompt(
+        "Login successful, but profile not found.\n" +
+        "Enter a nickname to create a new one?");
+    if (!nickname) { return cb('Registration cancelled'); }
+
+    var name = window.prompt("Name for your profile? (optional)");
+    if (!name) { name = nickname; }
+
+    var email = window.prompt("Email for your profile? (optional)");
+
+    var url = window.prompt("Static hosting URL for your bucket? (optional)");
+    if (!url) {
+      url = config.S3_BASE_URL + '/' + publisher.options.bucket + '/index.html';
+    }
+
+    var profile = JSON.stringify({
+      url: url,
+      name: name,
+      nickname: nickname,
+      email: email
+    });
+
+    publisher.put('profile.json', profile, function (err, result) {
+      if (err) {
+        var again = window.confirm(
+          "Problem registering: " + err + "\n" +
+          "Try again?");
+        if (again) {
+          AmazonS3BucketPublisher.startRegistration(publisher, cb);
+        }
+      } else {
+        AmazonS3BucketPublisher.refreshAuth(publisher.options, cb);
+      }
+    });
+  };
+
+  AmazonS3BucketPublisher.prototype.init = function (options) {
+    AmazonS3BucketPublisher.__base__.init.apply(this, arguments);
+    this.client = new S3Ajax({
+      base_url: config.S3_BASE_URL,
+      key_id: this.options.keyID,
+      secret_key: this.options.secret,
+      defeat_cache: true
+    });
+  };
+
+  AmazonS3BucketPublisher.prototype.startLogout = function () {
+    publishers.clearCurrent();
+  };
+
+  AmazonS3BucketPublisher.prototype.list = function (path, cb) {
+    this.client.listKeys(
+      this.options.bucket,
+      { prefix: path },
+      function (req, obj) {
+        var out = {};
+        if (obj.ListBucketResult && obj.ListBucketResult.Contents) {
+          obj.ListBucketResult.Contents.forEach(function (item) {
+            var path = item.Key.replace(path, '');
+            out[path] = item;
+          });
+        }
+        cb(null, out);
+      },
+      function (req, obj) { cb(obj.Error, obj); }
+    );
+  };
+
+  AmazonS3BucketPublisher.prototype.get = function (path, cb) {
+    this.client.get(
+      this.options.bucket, path,
+      function (req, obj) { cb(null, req.responseText); },
+      function (req, obj) { cb(obj.Error, null); }
+    );
+  };
+
+  AmazonS3BucketPublisher.prototype.rm = function (path, cb) {
+    this.client.deleteKey(
+      this.options.bucket, path,
+      function (req, obj) { cb(null, req.responseText); },
+      function (req, obj) { cb(obj.Error, null); }
+    );
+  };
+
+  AmazonS3BucketPublisher.prototype.put = function (path, content, cb) {
+    var ext = path.substr(path.lastIndexOf('.')+1);
+    var types = {
+      'html': 'text/html; charset=UTF-8',
+      'css': 'text/css; charset=UTF-8',
+      'js': 'text/javascript; charset=UTF-8'
+    };
+    this.client.put(
+      this.options.bucket, path, content,
+      { content_type: types[ext] },
+      function (req, obj) { cb(null, obj); },
+      function (req, obj) { cb(obj.Error, null); }
+    );
+  };
+
+  return AmazonS3BucketPublisher;
+};
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","S3Ajax":"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js":[function(require,module,exports){
+(function (global){
+var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+var _ = require('underscore');
+var misc = require('../misc');
+var S3Ajax = require('S3Ajax');
+
+var AUTH_NAME = 'AmazonS3MultiUser';
+
+// AmazonS3MultiUserPublisher app config, partially host-based
 // TODO: Make this user-configurable - in localstorage?
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
@@ -3708,29 +3884,29 @@ var config = _.extend({
 }[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
-  var AmazonS3Publisher = baseModule();
+  var AmazonS3MultiUserPublisher = baseModule();
 
   setupAmazonLoginButton();
 
-  AmazonS3Publisher.startLogin = function () {
+  AmazonS3MultiUserPublisher.startLogin = function () {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
-      location.pathname + '?loginType=AmazonS3';
+      location.pathname + '?loginType=' + AUTH_NAME;
     amazon.Login.authorize(options, redir);
   };
 
-  AmazonS3Publisher.checkAuth = function (cb) {
+  AmazonS3MultiUserPublisher.checkAuth = function (cb) {
     var auth = publishers.getProfile();
 
     // If we don't have an auth profile, it's possible that we've just received
     // an access token on the redirect side of login.
     if (!auth) {
       var qparams = misc.getQueryParameters();
-      if (qparams.loginType === 'AmazonS3') {
+      if (qparams.loginType === AUTH_NAME) {
         var qparams = misc.getQueryParameters();
         if (qparams.access_token) {
-          AmazonS3Publisher.refreshAuth(qparams.access_token);
+          AmazonS3MultiUserPublisher.refreshAuth(qparams.access_token);
           // Clean out the auth redirect parameters from location
           history.replaceState({}, '', location.protocol + '//' +
               location.hostname + (location.port ? ':' + location.port : '') +
@@ -3741,24 +3917,24 @@ module.exports = function (publishers, baseModule) {
     }
 
     // We have an auth profile, but it's not ours.
-    if (auth.type !== 'AmazonS3') { return cb(); }
+    if (auth.type !== AUTH_NAME) { return cb(); }
 
     // We have an auth profile, but it could have expired. Refresh, if so.
     var now = new Date();
     var expiration = new Date(auth.credentials.Expiration);
     if (now >= expiration) {
-      AmazonS3Publisher.refreshAuth(auth.access_token);
+      AmazonS3MultiUserPublisher.refreshAuth(auth.access_token);
       return cb();
     }
 
     // Looks like we have a fresh auth profile, so just go ahead and use it.
-    publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+    publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
     return cb();
   };
 
-  AmazonS3Publisher.refreshAuth = function (access_token) {
+  AmazonS3MultiUserPublisher.refreshAuth = function (access_token) {
     var auth = {
-      type: 'AmazonS3',
+      type: AUTH_NAME,
       access_token: access_token
     };
     $.ajax({
@@ -3773,7 +3949,7 @@ module.exports = function (publishers, baseModule) {
         cache: false
       });
     }).fail(function (xhr, status, err) {
-      AmazonS3Publisher.startRegistration(access_token);
+      AmazonS3MultiUserPublisher.startRegistration(access_token);
     }).then(function (profile, status, xhr) {
       _.extend(auth, profile);
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
@@ -3792,11 +3968,11 @@ module.exports = function (publishers, baseModule) {
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
-      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+      publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
     });
   };
 
-  AmazonS3Publisher.startRegistration = function (access_token) {
+  AmazonS3MultiUserPublisher.startRegistration = function (access_token) {
     // Get a nickname from the user.
     // TODO: Rework this to not use a browser dialog.
     var nickname = window.prompt(
@@ -3821,15 +3997,15 @@ module.exports = function (publishers, baseModule) {
         "Problem registering: " + xhr.responseText + "\n" +
         "Try again?");
       if (again) {
-        AmazonS3Publisher.startRegistration(access_token);
+        AmazonS3MultiUserPublisher.startRegistration(access_token);
       }
     }).done(function (data, status, xhr) {
-      AmazonS3Publisher.refreshAuth(access_token);
+      AmazonS3MultiUserPublisher.refreshAuth(access_token);
     });
   };
 
-  AmazonS3Publisher.prototype.init = function (options) {
-    AmazonS3Publisher.__base__.init.apply(this, arguments);
+  AmazonS3MultiUserPublisher.prototype.init = function (options) {
+    AmazonS3MultiUserPublisher.__base__.init.apply(this, arguments);
 
     var credentials = this.options.credentials;
     this.prefix = this.options.prefix;
@@ -3842,12 +4018,12 @@ module.exports = function (publishers, baseModule) {
     });
   };
 
-  AmazonS3Publisher.prototype.startLogout = function () {
+  AmazonS3MultiUserPublisher.prototype.startLogout = function () {
     amazon.Login.logout();
     publishers.clearCurrent();
   };
 
-  AmazonS3Publisher.prototype.list = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.list = function (path, cb) {
     var prefix = this.prefix + path;
     this.client.listKeys(
       config.BUCKET,
@@ -3866,7 +4042,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.get = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -3874,7 +4050,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.rm = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.rm = function (path, cb) {
     this.client.deleteKey(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -3882,7 +4058,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.put = function (path, content, cb) {
+  AmazonS3MultiUserPublisher.prototype.put = function (path, content, cb) {
     var ext = path.substr(path.lastIndexOf('.')+1);
     var types = {
       'html': 'text/html; charset=UTF-8',
@@ -3954,8 +4130,8 @@ module.exports = function (publishers, baseModule) {
     // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
     window.onAmazonLoginReady = function() {
       amazon.Login.setClientId(config.CLIENT_ID);
-      $('#LoginWithAmazon').click(function () {
-        AmazonS3Publisher.startLogin();
+      $('#LoginWithAmazonMultiUser').click(function () {
+        AmazonS3MultiUserPublisher.startLogin();
         return false;
       });
     };
@@ -3967,7 +4143,7 @@ module.exports = function (publishers, baseModule) {
     })(document);
   }
 
-  return AmazonS3Publisher;
+  return AmazonS3MultiUserPublisher;
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
