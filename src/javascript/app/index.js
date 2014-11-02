@@ -24,27 +24,38 @@ function setup (msg, publisher) {
 
   if (profile.avatar) {
     author.avatar = profile.avatar;
-  } else {
+  } else if (profile.emailHash) {
+    author.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
+  } else if (profile.email) {
     var hash = MD5.hex_md5(profile.email);
     author.avatar = 'https://www.gravatar.com/avatar/' + hash;
   }
+
   author.email = profile.email;
   author.nickname = profile.nickname;
   author.name = profile.name;
   author.url = profile.url;
 
-  $('header .session .username').attr('href', author.url)
+  $('.h-card').each(function () {
+    $(this)
+      .addClass('ready')
+      .find('.p-name').text(profile.name).end()
+      .find('.p-nickname').text(profile.nickname).end()
+      .find('.u-url').text(profile.url)
+        .attr('href', profile.url).end();
+  });
+
+  $('header .session .username').attr('href', author.url).text(author.name);
   $('header .session img.avatar').attr('src', author.avatar);
-  $('header .session .username').text(author.name);
 
   $('form#toot').each(function () {
     var f = $(this);
-    f.submit(function () { return false; });
-    f.find('[name=commit]').click(function (ev) {
+    f.submit(function () {
       var textarea = f.find('[name=content]');
       var content = textarea.val().trim();
       if (!content) { return; }
-      addEntry(publisher, { content: content });
+      addToot(publisher, { content: content });
+      saveToots(publisher);
       textarea.val('');
       return false;
     });
@@ -52,7 +63,7 @@ function setup (msg, publisher) {
 
   publisher.list('', function (err, resources) {
     if (err) {
-      console.log("LIST ERR " + err);
+      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
       return;
     }
     if ('index.html' in resources) {
@@ -88,7 +99,7 @@ function firstRun (publisher) {
   });
 }
 
-function addEntry (publisher, data) {
+function addToot (publisher, data) {
   data.author = data.author || author;
   data.published = data.published || (new Date()).toISOString();
   data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
@@ -97,8 +108,6 @@ function addEntry (publisher, data) {
   var entry = $(hentry(data));
   $('#entries').prepend(entry);
   entry.find('time.timeago').timeago();
-
-  saveToots(publisher);
 }
 
 function loadToots (publisher) {
@@ -155,18 +164,21 @@ function saveToots (publisher) {
       console.log("ERROR SAVING TOOTS " + err);
     } else {
       console.log("Saved toots");
-
-      $.ajax({
-        type: 'POST',
-        url: 'https://127.0.0.1:4443/api/ping',
-        data: { url: author.url }
-      }).then(function (data, status, xhr) {
-        console.log('Ping sent');
-      }).fail(function (xhr, status, err) {
-        console.error(err);
-      });
-
+      pingTootHub();
     }
   });
 
+}
+
+function pingTootHub () {
+  $.ajax({
+    type: 'POST',
+    url: 'https://localhost:4443/api/ping',
+    json: true,
+    data: { url: author.url }
+  }).then(function (data, status, xhr) {
+    console.log('Ping sent');
+  }).fail(function (xhr, status, err) {
+    console.error(err);
+  });
 }

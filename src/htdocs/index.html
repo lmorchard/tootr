@@ -34,12 +34,28 @@
 
       </header>
 
-      <form id="toot">
-        <textarea name="content" cols="75" rows="3"></textarea>
-        <button name="commit">toot!</button>
-      </form>
+      <aside id="sidebar">
+        <section id="about">
+          <dl class="h-card">
+            <dt>Name</dt>
+              <dd class="p-name"></dd>
+            <dt>Nickname</dt>
+              <dd class="p-nickname"></dd>
+            <dt>Web</dt>
+              <dd><a href="#" class="u-url"></a></dd>
+            <dt>Bio</dt>
+              <dd class="p-note"></dd>
+          </dl>
+        </section>
+      </aside>
 
-      <section id="entries">
+      <section id="main">
+        <form id="toot">
+          <textarea name="content"></textarea>
+          <button name="commit">toot!</button>
+        </form>
+        <section id="entries">
+        </section>
       </section>
 
     </section>

@@ -11,6 +11,10 @@ gulp build
 
 ## TODO
 
+* Improve Amazon S3 hosting
+  * Use presigner to allow writes to ~username URL spaces using amazon-uid
+    based profile data URLs
+
 * General UX
   * Need network loading indicators
   * Remember last publisher logged in
