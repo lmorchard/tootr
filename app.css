@@ -4,29 +4,19 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
-body > section#wrapper >header {
-  position: relative;
-}
-body > section#wrapper >header h1 {
-  margin: 0px;
-  text-align: center;
-}
-body > section#wrapper >header img {
-  vertical-align: middle;
-}
-body > section#wrapper >header .login {
+body #wrapper  >header .login {
   display: none;
   margin: 1em auto;
   text-align: center;
 }
-body > section#wrapper >header .session {
+body #wrapper  >header .session {
   font-size: 0.85em;
   display: none;
   position: absolute;
   top: 0em;
   right: 0em;
 }
-body > section#wrapper >header .session img.avatar {
+body #wrapper  >header .session img.avatar {
   width: 20px;
   height: 20px;
   vertical-align: middle;
@@ -34,15 +24,17 @@ body > section#wrapper >header .session img.avatar {
 form#toot {
   display: none;
   position: relative;
-  padding: 0.25em;
+  padding: 1em 1em;
 }
 form#toot textarea {
-  width: 100%;
   font-family: sans-serif;
-  left: 1em;
-  right: 1em;
   display: block;
   border: 1px solid #ccc;
+  width: 100%;
+  height: 4.5em;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }
 form#toot button {
   width: 100%;
@@ -56,7 +48,13 @@ body.logged-out > section#wrapper >header .login {
 body.logged-out > section#wrapper >header .session {
   display: none;
 }
+body.logged-out > section#wrapper >header h1 {
+  text-align: center;
+}
 body.logged-out > section#wrapper form#toot {
+  display: none;
+}
+body.logged-out > section#wrapper aside#sidebar {
   display: none;
 }
 body.logged-in > section#wrapper >header .login {
@@ -66,5 +64,8 @@ body.logged-in > section#wrapper >header .session {
   display: block;
 }
 body.logged-in > section#wrapper form#toot {
+  display: block;
+}
+body.logged-in > section#wrapper aside#sidebar {
   display: block;
 }

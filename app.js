@@ -3383,27 +3383,38 @@ function setup (msg, publisher) {
 
   if (profile.avatar) {
     author.avatar = profile.avatar;
-  } else {
+  } else if (profile.emailHash) {
+    author.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
+  } else if (profile.email) {
     var hash = MD5.hex_md5(profile.email);
     author.avatar = 'https://www.gravatar.com/avatar/' + hash;
   }
+
   author.email = profile.email;
   author.nickname = profile.nickname;
   author.name = profile.name;
   author.url = profile.url;
 
-  $('header .session .username').attr('href', author.url)
+  $('.h-card').each(function () {
+    $(this)
+      .addClass('ready')
+      .find('.p-name').text(profile.name).end()
+      .find('.p-nickname').text(profile.nickname).end()
+      .find('.u-url').text(profile.url)
+        .attr('href', profile.url).end();
+  });
+
+  $('header .session .username').attr('href', author.url).text(author.name);
   $('header .session img.avatar').attr('src', author.avatar);
-  $('header .session .username').text(author.name);
 
   $('form#toot').each(function () {
     var f = $(this);
-    f.submit(function () { return false; });
-    f.find('[name=commit]').click(function (ev) {
+    f.submit(function () {
       var textarea = f.find('[name=content]');
       var content = textarea.val().trim();
       if (!content) { return; }
-      addEntry(publisher, { content: content });
+      addToot(publisher, { content: content });
+      saveToots(publisher);
       textarea.val('');
       return false;
     });
@@ -3411,7 +3422,7 @@ function setup (msg, publisher) {
 
   publisher.list('', function (err, resources) {
     if (err) {
-      console.log("LIST ERR " + err);
+      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
       return;
     }
     if ('index.html' in resources) {
@@ -3447,7 +3458,7 @@ function firstRun (publisher) {
   });
 }
 
-function addEntry (publisher, data) {
+function addToot (publisher, data) {
   data.author = data.author || author;
   data.published = data.published || (new Date()).toISOString();
   data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
@@ -3456,8 +3467,6 @@ function addEntry (publisher, data) {
   var entry = $(hentry(data));
   $('#entries').prepend(entry);
   entry.find('time.timeago').timeago();
-
-  saveToots(publisher);
 }
 
 function loadToots (publisher) {
@@ -3504,7 +3513,7 @@ function saveToots (publisher) {
   // Clean up any .ui-only elements used for editing & etc.
   var ui = docIndex.querySelectorAll('.ui-only');
   for (var i=0; i<ui.length; i++) {
-      ui[i].parentNode.removeChild(ui[i]);
+    ui[i].parentNode.removeChild(ui[i]);
   };
 
   // Serialize the HTML and publish it!
@@ -3514,9 +3523,23 @@ function saveToots (publisher) {
       console.log("ERROR SAVING TOOTS " + err);
     } else {
       console.log("Saved toots");
+      pingTootHub();
     }
   });
 
+}
+
+function pingTootHub () {
+  $.ajax({
+    type: 'POST',
+    url: 'https://localhost:4443/api/ping',
+    json: true,
+    data: { url: author.url }
+  }).then(function (data, status, xhr) {
+    console.log('Ping sent');
+  }).fail(function (xhr, status, err) {
+    console.error(err);
+  });
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -3671,22 +3694,15 @@ var config = _.extend({
   "localhost": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
-    BUCKET: 'tootr-dev',
-    BUCKET_BASE_URL: 'https://tootr-dev.s3.amazonaws.com/',
+    BUCKET: 'toots-dev.lmorchard.com',
+    REGISTER_URL: 'https://localhost:9443/amazon/register',
     PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
-  },
-  "tootr.s3.amazonaws.com": {
-    CLIENT_ID: 'amzn1.application-oa2-client.1bb3141cbdfc4c179bc45f6086e7579c',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
-    BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
-    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   },
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
-    BUCKET: 'tootr',
-    BUCKET_BASE_URL: 'https://tootr.s3.amazonaws.com/',
+    BUCKET: 'toots.lmorchard.com',
+    REGISTER_URL: 'https://tootr.herokuapp.com/amazon/register',
     PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
   }
 }[location.hostname]);
@@ -3714,7 +3730,7 @@ module.exports = function (publishers, baseModule) {
       if (qparams.loginType === 'AmazonS3') {
         var qparams = misc.getQueryParameters();
         if (qparams.access_token) {
-          AmazonS3Publisher.refreshCredentials(qparams.access_token);
+          AmazonS3Publisher.refreshAuth(qparams.access_token);
           // Clean out the auth redirect parameters from location
           history.replaceState({}, '', location.protocol + '//' +
               location.hostname + (location.port ? ':' + location.port : '') +
@@ -3731,7 +3747,7 @@ module.exports = function (publishers, baseModule) {
     var now = new Date();
     var expiration = new Date(auth.credentials.Expiration);
     if (now >= expiration) {
-      AmazonS3Publisher.refreshCredentials(auth.access_token);
+      AmazonS3Publisher.refreshAuth(auth.access_token);
       return cb();
     }
 
@@ -3740,24 +3756,26 @@ module.exports = function (publishers, baseModule) {
     return cb();
   };
 
-  AmazonS3Publisher.refreshCredentials = function (access_token, cb) {
+  AmazonS3Publisher.refreshAuth = function (access_token) {
     var auth = {
       type: 'AmazonS3',
       access_token: access_token
     };
-
     $.ajax({
       url: 'https://api.amazon.com/user/profile',
-      headers: {
-        'Authorization': 'bearer ' + access_token
-      }
+      headers: { 'Authorization': 'bearer ' + access_token }
+    }).fail(function (xhr, status, err) {
+      publishers.clearCurrent();
+    }).then(function (data, status, xhr) {
+      return $.ajax({
+        url: config.S3_BASE_URL + '/' + config.BUCKET +
+          '/users/amazon/' + data.user_id + '.json',
+        cache: false
+      });
+    }).fail(function (xhr, status, err) {
+      AmazonS3Publisher.startRegistration(access_token);
     }).then(function (profile, status, xhr) {
-
-      profile.nickname = profile.user_id;
-      profile.url = config.BUCKET_BASE_URL + 'users/amazon/' +
-        profile.user_id + '/' + 'index.html';
       _.extend(auth, profile);
-
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
         'Action': 'AssumeRoleWithWebIdentity',
         'Version': '2011-06-15',
@@ -3767,19 +3785,46 @@ module.exports = function (publishers, baseModule) {
         'RoleArn': config.ROLE_ARN,
         'WebIdentityToken': access_token
       }));
-
+    }).fail(function (xhr, status, err) {
+      publishers.clearCurrent();
     }).then(function (dataXML, status, xhr) {
-
       auth.credentials = misc.xmlToObj(dataXML)
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
       publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+    });
+  };
 
+  AmazonS3Publisher.startRegistration = function (access_token) {
+    // Get a nickname from the user.
+    // TODO: Rework this to not use a browser dialog.
+    var nickname = window.prompt(
+        "Login successful, but profile not found.\n" +
+        "Enter a nickname to create a new one?");
+
+    // Bail, if no nickname provided.
+    if (!nickname) { return; }
+
+    // Attempt to register the account with given nickname
+    $.ajax({
+      url: config.REGISTER_URL,
+      type: 'POST',
+      dataType: 'json',
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({
+        AccessToken: access_token,
+        nickname: nickname
+      })
     }).fail(function (xhr, status, err) {
-
-      publishers.clearCurrent();
-
+      var again = window.confirm(
+        "Problem registering: " + xhr.responseText + "\n" +
+        "Try again?");
+      if (again) {
+        AmazonS3Publisher.startRegistration(access_token);
+      }
+    }).done(function (data, status, xhr) {
+      AmazonS3Publisher.refreshAuth(access_token);
     });
   };
 
@@ -3787,7 +3832,7 @@ module.exports = function (publishers, baseModule) {
     AmazonS3Publisher.__base__.init.apply(this, arguments);
 
     var credentials = this.options.credentials;
-    this.prefix = 'users/amazon/' + this.options.user_id + '/';
+    this.prefix = this.options.prefix;
     this.client = new S3Ajax({
       base_url: config.S3_BASE_URL,
       key_id: credentials.AccessKeyId,
@@ -3875,7 +3920,6 @@ module.exports = function (publishers, baseModule) {
       contentType: "application/json; charset=utf-8",
       data: JSON.stringify({
         AccessToken: access_token,
-        Bucket: config.BUCKET,
         Path: path,
         ContentType: types[ext]
       })
@@ -3888,7 +3932,8 @@ module.exports = function (publishers, baseModule) {
       formdata.append('file', content);
 
       return $.ajax({
-        url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
+        // url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
+        url: config.S3_BASE_URL +  '/' + config.BUCKET + '/',
         type: 'POST',
         data: formdata,
         processData: false,
@@ -3899,7 +3944,6 @@ module.exports = function (publishers, baseModule) {
     }).then(function (data, status, xhr) {
       cb(null, true);
     }, function (xhr, status, err) {
-      console.log(xhr.responseText);
       cb(err, null);
     });
 

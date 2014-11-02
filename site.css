@@ -4,22 +4,60 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
-body > section#wrapper {
-  background: #fff;
-  width: 900px;
-  padding: 1em;
+body #wrapper {
+  width: 955px;
   margin: 0 auto;
 }
-section#entries {
-  margin: 1em 0;
+body #wrapper #main {
+  margin-right: 275px;
+  background: #fff;
+}
+body #wrapper #sidebar {
+  width: 275px;
+  float: right;
+  background: #eee;
+}
+#wrapper > header {
+  position: relative;
+  padding: 0 0 0.5em 0;
+}
+#wrapper > header h1 {
+  margin: 0px;
+}
+#wrapper > header img {
+  vertical-align: middle;
+}
+#sidebar #about {
+  padding: 1em;
+}
+#sidebar #about h2 {
+  margin: 0;
+}
+#sidebar #about dl.h-card {
+  display: none;
+  font-size: 0.75em;
+  margin: 0;
+}
+#sidebar #about dl.h-card dt {
+  margin: 0 0 0.25em 0;
+  font-weight: bold;
+}
+#sidebar #about dl.h-card dd {
+  margin: 0 0 0.5em 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sidebar #about dl.h-card.ready {
+  display: block;
 }
 section#entries section.h-entry {
   position: relative;
-  margin: 0.5em 0;
-  padding: 1em 0.5em 0.25em 58px;
+  margin: 0.5em 1em;
+  padding: 1em 0.5em 0.25em 64px;
   min-height: 48px;
   background: #fff;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #ccc;
 }
 section#entries section.h-entry a.u-url {
   text-decoration: none;
