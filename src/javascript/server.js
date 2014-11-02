@@ -208,7 +208,8 @@ function loadConfig() {
     "aws_access_key_id": "XXX",
     "aws_secret_access_key": "XXX",
     "aws_region": "us-east-1",
-    "aws_bucket": "tootr",
+    "aws_bucket": "toots.lmorchard.com",
+    "aws_static_base_url": "http://toots.lmorchard.com/",
     "aws_signature_timeout": 30000
   };
   var config;

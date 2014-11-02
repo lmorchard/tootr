@@ -9,22 +9,6 @@ var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
   TOKEN_DURATION: 900
 }, {
-  /*
-  "localhost": {
-    CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
-    BUCKET: 'tootr-dev',
-    REGISTER_URL: 'https://localhost:9443/amazon/register',
-    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
-  },
-  "lmorchard.github.io": {
-    CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
-    BUCKET: 'tootr',
-    REGISTER_URL: 'https://tootr.herokuapp.com/amazon/register',
-    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
-  }
-  */
   "localhost": {
     CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
