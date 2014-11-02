@@ -7,6 +7,19 @@ body {
       display: none;
       margin: 1em auto;
       text-align: center;
+      > ul {
+        list-style-type: none;
+        > li {
+          padding: 1em;
+          border-top: 1px solid #888;
+          > form {
+            label {
+              width: 8ex;
+              text-align: right;
+            }
+          }
+        }
+      }
     }
     .session {
       font-size: 0.85em;

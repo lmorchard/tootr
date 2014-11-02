@@ -3,7 +3,9 @@ var _ = require('underscore');
 var misc = require('../misc');
 var S3Ajax = require('S3Ajax');
 
-// AmazonS3Publisher app config, partially host-based
+var AUTH_NAME = 'AmazonS3MultiUser';
+
+// AmazonS3MultiUserPublisher app config, partially host-based
 // TODO: Make this user-configurable - in localstorage?
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
@@ -26,29 +28,29 @@ var config = _.extend({
 }[location.hostname]);
 
 module.exports = function (publishers, baseModule) {
-  var AmazonS3Publisher = baseModule();
+  var AmazonS3MultiUserPublisher = baseModule();
 
   setupAmazonLoginButton();
 
-  AmazonS3Publisher.startLogin = function () {
+  AmazonS3MultiUserPublisher.startLogin = function () {
     options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
-      location.pathname + '?loginType=AmazonS3';
+      location.pathname + '?loginType=' + AUTH_NAME;
     amazon.Login.authorize(options, redir);
   };
 
-  AmazonS3Publisher.checkAuth = function (cb) {
+  AmazonS3MultiUserPublisher.checkAuth = function (cb) {
     var auth = publishers.getProfile();
 
     // If we don't have an auth profile, it's possible that we've just received
     // an access token on the redirect side of login.
     if (!auth) {
       var qparams = misc.getQueryParameters();
-      if (qparams.loginType === 'AmazonS3') {
+      if (qparams.loginType === AUTH_NAME) {
         var qparams = misc.getQueryParameters();
         if (qparams.access_token) {
-          AmazonS3Publisher.refreshAuth(qparams.access_token);
+          AmazonS3MultiUserPublisher.refreshAuth(qparams.access_token);
           // Clean out the auth redirect parameters from location
           history.replaceState({}, '', location.protocol + '//' +
               location.hostname + (location.port ? ':' + location.port : '') +
@@ -59,24 +61,24 @@ module.exports = function (publishers, baseModule) {
     }
 
     // We have an auth profile, but it's not ours.
-    if (auth.type !== 'AmazonS3') { return cb(); }
+    if (auth.type !== AUTH_NAME) { return cb(); }
 
     // We have an auth profile, but it could have expired. Refresh, if so.
     var now = new Date();
     var expiration = new Date(auth.credentials.Expiration);
     if (now >= expiration) {
-      AmazonS3Publisher.refreshAuth(auth.access_token);
+      AmazonS3MultiUserPublisher.refreshAuth(auth.access_token);
       return cb();
     }
 
     // Looks like we have a fresh auth profile, so just go ahead and use it.
-    publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+    publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
     return cb();
   };
 
-  AmazonS3Publisher.refreshAuth = function (access_token) {
+  AmazonS3MultiUserPublisher.refreshAuth = function (access_token) {
     var auth = {
-      type: 'AmazonS3',
+      type: AUTH_NAME,
       access_token: access_token
     };
     $.ajax({
@@ -91,7 +93,7 @@ module.exports = function (publishers, baseModule) {
         cache: false
       });
     }).fail(function (xhr, status, err) {
-      AmazonS3Publisher.startRegistration(access_token);
+      AmazonS3MultiUserPublisher.startRegistration(access_token);
     }).then(function (profile, status, xhr) {
       _.extend(auth, profile);
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
@@ -110,11 +112,11 @@ module.exports = function (publishers, baseModule) {
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
-      publishers.setCurrent(auth, new AmazonS3Publisher(auth));
+      publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
     });
   };
 
-  AmazonS3Publisher.startRegistration = function (access_token) {
+  AmazonS3MultiUserPublisher.startRegistration = function (access_token) {
     // Get a nickname from the user.
     // TODO: Rework this to not use a browser dialog.
     var nickname = window.prompt(
@@ -139,15 +141,15 @@ module.exports = function (publishers, baseModule) {
         "Problem registering: " + xhr.responseText + "\n" +
         "Try again?");
       if (again) {
-        AmazonS3Publisher.startRegistration(access_token);
+        AmazonS3MultiUserPublisher.startRegistration(access_token);
       }
     }).done(function (data, status, xhr) {
-      AmazonS3Publisher.refreshAuth(access_token);
+      AmazonS3MultiUserPublisher.refreshAuth(access_token);
     });
   };
 
-  AmazonS3Publisher.prototype.init = function (options) {
-    AmazonS3Publisher.__base__.init.apply(this, arguments);
+  AmazonS3MultiUserPublisher.prototype.init = function (options) {
+    AmazonS3MultiUserPublisher.__base__.init.apply(this, arguments);
 
     var credentials = this.options.credentials;
     this.prefix = this.options.prefix;
@@ -160,12 +162,12 @@ module.exports = function (publishers, baseModule) {
     });
   };
 
-  AmazonS3Publisher.prototype.startLogout = function () {
+  AmazonS3MultiUserPublisher.prototype.startLogout = function () {
     amazon.Login.logout();
     publishers.clearCurrent();
   };
 
-  AmazonS3Publisher.prototype.list = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.list = function (path, cb) {
     var prefix = this.prefix + path;
     this.client.listKeys(
       config.BUCKET,
@@ -184,7 +186,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.get = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.get = function (path, cb) {
     this.client.get(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -192,7 +194,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.rm = function (path, cb) {
+  AmazonS3MultiUserPublisher.prototype.rm = function (path, cb) {
     this.client.deleteKey(
       config.BUCKET, this.prefix + path,
       function (req, obj) { cb(null, req.responseText); },
@@ -200,7 +202,7 @@ module.exports = function (publishers, baseModule) {
     );
   };
 
-  AmazonS3Publisher.prototype.put = function (path, content, cb) {
+  AmazonS3MultiUserPublisher.prototype.put = function (path, content, cb) {
     var ext = path.substr(path.lastIndexOf('.')+1);
     var types = {
       'html': 'text/html; charset=UTF-8',
@@ -272,8 +274,8 @@ module.exports = function (publishers, baseModule) {
     // TODO: Maybe do this conditionally / on-demand only when an Amazon login is desired?
     window.onAmazonLoginReady = function() {
       amazon.Login.setClientId(config.CLIENT_ID);
-      $('#LoginWithAmazon').click(function () {
-        AmazonS3Publisher.startLogin();
+      $('#LoginWithAmazonMultiUser').click(function () {
+        AmazonS3MultiUserPublisher.startLogin();
         return false;
       });
     };
@@ -285,5 +287,5 @@ module.exports = function (publishers, baseModule) {
     })(document);
   }
 
-  return AmazonS3Publisher;
+  return AmazonS3MultiUserPublisher;
 };

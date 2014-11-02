@@ -5,7 +5,7 @@ var async = require('async');
 
 var publishers = module.exports = {};
 
-var LOCAL_PROFILE_KEY = 'profile20141005';
+var LOCAL_PROFILE_KEY = 'profile20141102';
 
 publishers.checkAuth = function () {
   var profile = publishers.getProfile();
@@ -70,7 +70,8 @@ var baseModule = function () {
 };
 
 var modules = {
-  'AmazonS3': require('./publishers/AmazonS3'),
+  'AmazonS3Bucket': require('./publishers/AmazonS3Bucket'),
+  'AmazonS3MultiUser': require('./publishers/AmazonS3MultiUser'),
   'Dropbox': require('./publishers/Dropbox'),
   'Github': require('./publishers/Github')
 };
