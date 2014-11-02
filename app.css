@@ -10,15 +10,25 @@ body #wrapper  >header .login {
   text-align: center;
 }
 body #wrapper  >header .login > ul {
+  margin: 0;
+  padding: 0;
   list-style-type: none;
 }
 body #wrapper  >header .login > ul > li {
-  padding: 1em;
-  border-top: 1px solid #888;
+  padding: 0.75em;
 }
 body #wrapper  >header .login > ul > li > form label {
   width: 8ex;
   text-align: right;
+}
+body #wrapper  >header .login > ul > li.advanced {
+  display: none;
+}
+body #wrapper  >header .login.advanced #showAdvancedLogin {
+  display: none;
+}
+body #wrapper  >header .login.advanced > ul > li.advanced {
+  display: block;
 }
 body #wrapper  >header .session {
   font-size: 0.85em;
