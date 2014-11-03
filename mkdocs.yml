@@ -1,0 +1,13 @@
+site_name: tootr
+site_dir: build/docs
+site_author: Les Orchard
+repo_url: https://github.com/lmorchard/tootr/
+theme: yeti
+use_directory_urls: false
+pages:
+  - [index.md, 'Home']
+  - [faqs.md, 'FAQs']
+  - [howto/amazon-tootspace.md, 'How-to', 'Amazon S3 Multi-User']
+  - [howto/amazon-s3-bucket.md, 'How-to', 'Amazon S3 Bucket']
+  - [howto/github-pages.md, 'How-to', 'GitHub Pages']
+  - [howto/dropbox.md, 'How-to', 'Dropbox']
