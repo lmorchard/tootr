@@ -1,5 +1,7 @@
 # Fancifully Anticipated Questions
 
+See also: [tootr: microblogging app, hosting not included](http://blog.lmorchard.com/2014/10/11/tootr-1)
+
 Here are some answers to questions no one's asked yet:
 
   * **Toot** is a white-label term for "tweet" - it's not as dry as "[microblog][]
