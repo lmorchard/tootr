@@ -2,6 +2,10 @@
 
 See also: [tootr: microblogging app, hosting not included](http://blog.lmorchard.com/2014/10/11/tootr-1)
 
+## Docs
+
+* <https://lmorchard.github.io/tootr/docs/>
+
 ## Hacking
 
 ```
