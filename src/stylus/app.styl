@@ -8,10 +8,11 @@ body {
       margin: 1em auto;
       text-align: center;
       > ul {
+        margin: 0;
+        padding: 0;
         list-style-type: none;
         > li {
-          padding: 1em;
-          border-top: 1px solid #888;
+          padding: 0.75em;
           > form {
             label {
               width: 8ex;
@@ -19,6 +20,17 @@ body {
             }
           }
         }
+        > li.advanced {
+          display: none
+        }
+      }
+    }
+    .login.advanced {
+      #showAdvancedLogin {
+        display: none;
+      }
+      > ul > li.advanced {
+        display: block;
       }
     }
     .session {

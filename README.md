@@ -11,10 +11,6 @@ gulp build
 
 ## TODO
 
-* Improve Amazon S3 hosting
-  * Use presigner to allow writes to ~username URL spaces using amazon-uid
-    based profile data URLs
-
 * General UX
   * Need network loading indicators
   * Remember last publisher logged in
@@ -25,15 +21,16 @@ gulp build
   * delete
 
 * Profile
-  * Start from Amazon profile, allow edit
-  * Link amazon user ID to a user-chosen nickname?
+  * Edit fields like bio, etc.
   * Upload image other than gravatar
 
 * Publishers
-  * amazon s3 with own credentials
-  * github
   * webdav (?)
   * ???
+
+* AmazonMultiUser
+  * Accept Facebook & Google WIF logins?
+  * Expand broker server to accept other identities?
 
 * Archives
   * collate toots into HTML feeds by date yyyy/mm/dd.html

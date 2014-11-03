@@ -12,6 +12,11 @@ var hentry = require('../../templates/hentry');
 module.exports = function () {
   PubSub.subscribe('publishers.setCurrent', setup);
   PubSub.subscribe('publishers.clearCurrent', teardown);
+
+  $('#showAdvancedLogin').click(function () {
+    $('section.login').toggleClass('advanced');
+    return false;
+  });
 };
 
 var author = { };

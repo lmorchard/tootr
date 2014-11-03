@@ -33,7 +33,7 @@ module.exports = function (publishers, baseModule) {
   setupAmazonLoginButton();
 
   AmazonS3MultiUserPublisher.startLogin = function () {
-    options = { scope : 'profile' };
+    var options = { scope : 'profile' };
     var redir = location.protocol + '//' + location.hostname +
       (location.port ? ':' + location.port : '') +
       location.pathname + '?loginType=' + AUTH_NAME;
@@ -212,23 +212,6 @@ module.exports = function (publishers, baseModule) {
     var access_token = this.options.access_token;
 
     /*
-     * Note: This is the straightforward way to do it, if the access policy
-     * allows the temporary credentials to write to the subpath in the bucket.
-     * Problem is, there is no limitation on what this user can write with
-     * those credentials. So, someone could upload lots of huge files on my S3
-     * dime, and I don't like that.
-
-    this.client.put(
-      config.BUCKET,
-      this.prefix + path,
-      content,
-      {content_type: types[ext]},
-      function (req, obj) { cb(null, obj); },
-      function (req, obj) { cb(obj.Error, null); }
-    );
-    */
-
-    /*
      * To keep some control over uploads, I use a presigner service that
      * imposes a policy. Then, I need to rework this as a form POST instead of
      * an S3 REST API request.
@@ -252,7 +235,6 @@ module.exports = function (publishers, baseModule) {
       formdata.append('file', content);
 
       return $.ajax({
-        // url: 'https://' + config.BUCKET + '.s3.amazonaws.com/',
         url: config.S3_BASE_URL +  '/' + config.BUCKET + '/',
         type: 'POST',
         data: formdata,
