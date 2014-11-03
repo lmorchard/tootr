@@ -9,6 +9,9 @@ body #wrapper  >header .login {
   margin: 1em auto;
   text-align: center;
 }
+body #wrapper  >header .login .advanced {
+  display: none;
+}
 body #wrapper  >header .login > ul {
   margin: 0;
   padding: 0;
@@ -21,13 +24,10 @@ body #wrapper  >header .login > ul > li > form label {
   width: 8ex;
   text-align: right;
 }
-body #wrapper  >header .login > ul > li.advanced {
-  display: none;
-}
 body #wrapper  >header .login.advanced #showAdvancedLogin {
   display: none;
 }
-body #wrapper  >header .login.advanced > ul > li.advanced {
+body #wrapper  >header .login.advanced .advanced {
   display: block;
 }
 body #wrapper  >header .session {
