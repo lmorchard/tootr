@@ -7,6 +7,9 @@ body {
       display: none;
       margin: 1em auto;
       text-align: center;
+      .advanced {
+        display: none
+      }
       > ul {
         margin: 0;
         padding: 0;
@@ -20,16 +23,13 @@ body {
             }
           }
         }
-        > li.advanced {
-          display: none
-        }
       }
     }
     .login.advanced {
       #showAdvancedLogin {
         display: none;
       }
-      > ul > li.advanced {
+      .advanced {
         display: block;
       }
     }

@@ -1,9 +1,11 @@
 # How-to: Amazon S3 Multi-User
 
 Tootr comes with a small server that helps share an Amazon S3 bucket with many
-users. This can be handy for providing space to toot for friends, family, or
-colleagues. The server brokers write access to the bucket in conjunction with
-Amazon Web Identity Federation.
+people. This can be handy for providing space to toot for friends, family, or
+colleagues. This server uses [Amazon's identity service][login] to broker
+write access to an S3 bucket. 
+
+[login]: https://login.amazon.com/
 
 ## Create a shared S3 bucket
 
