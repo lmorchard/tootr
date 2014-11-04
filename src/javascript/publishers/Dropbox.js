@@ -2,10 +2,8 @@ var $ = require('jquery');
 var _ = require('underscore');
 
 var config = _.extend({
+  APP_KEY: 'ovvlu8dh78f0j2m'
 }, {
-  "localhost": {
-    APP_KEY: 'ovvlu8dh78f0j2m'
-  },
   "lmorchard.github.io": {
     APP_KEY: 'w9p1vvnppuhsqzk'
   }

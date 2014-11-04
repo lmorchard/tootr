@@ -5,13 +5,11 @@ var misc = require('../misc');
 var config = _.extend({
   API_BASE: 'https://api.github.com/',
   API_SCOPE: ['user:email', 'repo', 'gist'],
-  BRANCH_NAME: 'gh-pages'
+  BRANCH_NAME: 'gh-pages',
+  CLIENT_ID: '6d59b16e660e246d3ee5',
+  AUTHENTICATE_URL: 'https://localhost:9443/github/authenticate/',
+  REPO_NAME: 'toots-dev'
 }, {
-  "localhost": {
-    CLIENT_ID: '6d59b16e660e246d3ee5',
-    AUTHENTICATE_URL: 'https://localhost:9443/github/authenticate/',
-    REPO_NAME: 'toots-dev'
-  },
   "lmorchard.github.io": {
     CLIENT_ID: '62a54438d65933d8dc8d',
     AUTHENTICATE_URL: 'https://tootr.herokuapp.com/github/authenticate/',
