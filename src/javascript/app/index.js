@@ -41,17 +41,28 @@ function setup (msg, publisher) {
   author.name = profile.name;
   author.url = profile.url;
 
-  $('.h-card').each(function () {
-    $(this)
-      .addClass('ready')
-      .find('.p-name').text(profile.name).end()
-      .find('.p-nickname').text(profile.nickname).end()
-      .find('.u-url').text(profile.url)
-        .attr('href', profile.url).end();
-  });
+  $('.h-card')
+    .addClass('ready')
+    .find('.p-name').text(profile.name).end()
+    .find('.p-nickname').text(profile.nickname).end()
+    .find('.u-url').text(profile.url)
+      .attr('href', profile.url).end();
 
-  $('header .session .username').attr('href', author.url).text(author.name);
-  $('header .session img.avatar').attr('src', author.avatar);
+  $('.session')
+    .find('a.home').attr('href', author.url).end()
+    .find('a.username').text(author.name).end()
+    .find('.avatar img').attr('src', author.avatar)
+      .attr('title', author.name).attr('alt', author.name);
+
+  console.log("WOO");
+  $('.login-choices').each(function () {
+    var panel = $(this);
+    console.log(panel);
+    panel.find('.panel-heading .btn').click(function (ev) {
+      var button = $(this);
+      console.log(button.text());
+    });
+  });
 
   $('form#toot').each(function () {
     var f = $(this);

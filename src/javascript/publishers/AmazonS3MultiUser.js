@@ -260,10 +260,15 @@ module.exports = function (publishers, baseModule) {
       });
     };
     (function(d) {
-      var a = d.createElement('script'); a.type = 'text/javascript';
-      a.async = true; a.id = 'amazon-login-sdk';
+      var r = d.createElement('div');
+      r.id = 'amazon-root';
+      d.body.appendChild(r);
+      var a = d.createElement('script');
+      a.type = 'text/javascript';
+      a.async = true;
+      a.id = 'amazon-login-sdk';
       a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
-      d.getElementById('amazon-root').appendChild(a);
+      r.appendChild(a);
     })(document);
   }
 

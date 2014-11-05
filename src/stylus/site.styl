@@ -1,40 +1,14 @@
-body {
-  background: #ddd;
-  padding: 1em;
-  margin: 0;
-  font-family: sans-serif;
-  #wrapper {
-    #main {
-      width: 66%
-      background: #fff;
-    }
-    #sidebar {
-      width: 33%;
-      float: right;
-      background: #eee;
-    }
-  }
-}
-
-#wrapper > header {
-  position: relative;
-  padding: 1em 0 0.5em 0;
-  h1 {
-    margin: 0px;
-  }
-  img {
-    vertical-align: middle;
-  }
-}
-
 #sidebar #about {
+  font-size: 0.85em;
+  background: #efefef;
+  border: 1px solid #ccc;
+  margin: 1em 0 1em 0;
   padding: 1em;
   h2 {
     margin: 0;
   }
   dl.h-card {
     display: none;
-    font-size: 0.75em;
     margin: 0;
     dt {
       margin: 0 0 0.25em 0;
@@ -46,19 +20,23 @@ body {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    dd.p-note {
+      white-space: inherit;
+      overflow: inherit;
+      text-overflow: inherit;
+    }
   }
   dl.h-card.ready {
     display: block;
   }
 }
 
-section#entries section.h-entry {
+.h-entry {
   position: relative;
-  margin: 0.5em 1em;
+  margin: 0.5em 0;
   padding: 1em 0.5em 0.25em 64px;
   min-height: 48px;
   background: #fff;
-  border-top: 1px solid #ccc;
   a.u-url {
     text-decoration: none;
   }
@@ -71,7 +49,7 @@ section#entries section.h-entry {
     height: 48px;
   }
   header {
-    font-size: 0.75em;
+    font-size: 0.85em;
     margin: 0 0 0.25em 0;
     padding: 0;
     a.u-url:before {
@@ -87,28 +65,5 @@ section#entries section.h-entry {
   }
   p.e-content {
     margin: 0.5em 0 0.5em 0;
-  }
-}
-
-@media screen and (min-width: 950px) {
-  body {
-    #wrapper { width: 950px; margin: 0 auto; }
-  }
-}
-
-@media screen and (max-width: 950px) {
-  body {
-    #wrapper { width: 100%; }
-  }
-}
-
-@media screen and (max-width: 640px) {
-  body {
-    padding: 0;
-    #wrapper {
-      width: 100%;
-      #sidebar { float: none; width: 100%; }
-      #main { width: 100%; }
-    }
   }
 }

@@ -1,64 +1,51 @@
 body {
-  background: #ddd;
-  margin: 0; padding: 0;
-  font-family: sans-serif;
-  #wrapper > header {
-    margin: 0 1em;
-    .login {
+  > .container {
+    margin-top: 55px;
+  }
+  .on-logged-in { display: none; }
+  form#toot { display: none; }
+  aside#sidebar { display: none; }
+  .login.advanced {
+    #showAdvancedLogin {
       display: none;
-      margin: 1em auto;
-      text-align: center;
-      .advanced {
-        display: none
-      }
-      > ul {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        > li {
-          padding: 0.75em;
-          > form {
-            label {
-              width: 8ex;
-              text-align: right;
-            }
-          }
-        }
-      }
     }
-    .login.advanced {
-      #showAdvancedLogin {
-        display: none;
-      }
-      .advanced {
-        display: block;
-      }
+    .advanced {
+      display: block;
     }
-    .session {
-      font-size: 0.85em;
-      display: none;
-      position: absolute;
-      top: 1em;
-      right: 0em;
-      img.avatar {
-        width: 20px;
-        height: 20px;
-        vertical-align: middle;
+  }
+}
+
+body.logged-in {
+  .on-logged-out { display: none; }
+  .on-logged-in { display: inherit; }
+  form#toot { display: inherit; }
+  aside#sidebar { display: inherit; }
+}
+
+.session {
+  .avatar {
+    a {
+      margin: 0;
+      padding: 6px;
+      img {
+        height: 33px;
       }
     }
   }
 }
 
+.navbar-nav.navbar-right:last-child { margin-right: 0; }
+
 form#toot {
   display: none;
+  margin-top: 1em;
   position: relative;
-  padding: 1em 1em;
   textarea {
     font-family: sans-serif;
     display: block;
     border: 1px solid #ccc;
     width: 100%;
-    height: 4.5em;
+    height: 5.5em;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -71,21 +58,22 @@ form#toot {
   }
 }
 
-body.logged-out > section#wrapper {
-  >header {
-    .login { display: block; }
-    .session { display: none; }
-    h1 { text-align: center; }
-  }
-  form#toot { display: none; }
-  aside#sidebar { display: none; }
+ul.session li {
+  text-align: right;
 }
 
-body.logged-in > section#wrapper {
-  >header {
-    .login { display: none; }
-    .session { display: block; }
+.login-choices {
+  .panel-heading {
+    text-align: center;
   }
-  form#toot { display: block; }
-  aside#sidebar { display: block; }
+  .panel-body {
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 970px) {
+  .session .show-username { display: none; }
+}
+@media screen and (max-width: 750px) {
+  .session .avatar { display: none; }
 }

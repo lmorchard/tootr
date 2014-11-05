@@ -2,67 +2,70 @@
 <html>
 
   <head>
+
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>tootr!</title>
-    <script src="head.js"></script>
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/yeti/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="site.css" />
     <link rel="stylesheet" href="app.css" />
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
+    <script src="head.js"></script>
+
   </head>
 
   <body class="index">
-    <section id="wrapper">
 
-      <header>
-        <h1>tootr</h1>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed"
+              data-toggle="collapse" data-target="#navbar"
+              aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Tootr</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
 
-        <section class="login">
-          <ul>
-
+          <ul class="on-logged-in session nav navbar-nav navbar-right">
+            <li class="show-username">
+              <a class="home username" href="#" target="_blank"></a>
+            </li>
+            <li class="avatar">
+              <a class="home" href="#" target="_blank"><img src=""></a>
+            </li>
             <li>
-              <a href="#" id="LoginWithAmazonMultiUser"><img border="0" alt="Login with Amazon"
-                src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
-                width="156" height="32" /></a>
-              <br>
-              <a href="#" id="showAdvancedLogin">Show more options</a>
-              <span class="advanced">(<a target="_blank" href="https://lmorchard.github.io/tootr/docs/howto/amazon-tootspace/index.html">How-to?</a>)</span>
+              <button id="logout" class="btn btn-default navbar-btn">Logout</button>
             </li>
-
-            <li class="advanced">
-              <button id="LoginWithGithub">Login with Github</button><br>
-                (<a target="_blank" href="https://lmorchard.github.io/tootr/docs/howto/github-pages/index.html">How-to?</a>)
-            </li>
-
-            <li class="advanced">
-              <button id="LoginWithDropbox">Login with Dropbox</button><br>
-                (<a target="_blank" href="https://lmorchard.github.io/tootr/docs/howto/dropbox/index.html">How-to?</a>)
-            </li>
-
-            <li class="advanced">
-              <form>
-                <label for="keyID">Key ID:</label> <input name="keyID" type="text"><br>
-                <label for="secret">Secret:</label> <input name="secret" type="text"><br>
-                <label for="bucket">Bucket:</label> <input name="bucket" type="text"><br>
-                <button id="LoginWithAmazonBucket">Connect to Amazon S3 Bucket</button><br>
-                (<a target="_blank" href="https://lmorchard.github.io/tootr/docs/howto/amazon-s3-bucket/index.html">How-to?</a>)
-              </form>
-            </li>
-
           </ul>
-        </section>
 
-        <section class="session">
-          <img class="avatar" src="">
-          <a class="username" href="#" target="_blank"></a>
-          <button id="logout">Logout</button>
-        </section>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
 
-      </header>
+    <div class="container">
 
-      <aside id="sidebar">
+      <div class="col-md-8">
+        <form id="toot">
+          <textarea name="content"></textarea>
+          <button class="btn btn-success btn-lg" name="commit">toot!</button>
+        </form>
+        <section id="entries"></section>
+      </div>
+
+      <aside class="col-md-4" id="sidebar">
         <section id="about">
           <dl class="h-card">
             <dt>Name</dt>
@@ -72,25 +75,86 @@
             <dt>Web</dt>
               <dd><a href="#" target="_blank" class="u-url"></a></dd>
             <dt>Bio</dt>
-              <dd class="p-note"></dd>
+              <dd class="p-note">
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut quis laoreet felis. Curabitur mattis at augue non efficitur. Aenean egestas consectetur euismod.</p>
+              </dd>
           </dl>
         </section>
       </aside>
 
-      <section id="main">
-        <form id="toot">
-          <textarea name="content"></textarea>
-          <button name="commit">toot!</button>
-        </form>
-        <section id="entries">
-        </section>
+      <section class="login on-logged-out">
+
+        <div class="login-choices panel panel-default">
+
+          <div class="panel-heading">
+            <h3 class="panel-title">Choose a web publishing service:</h3>
+          </div>
+
+          <!-- Nav tabs -->
+            <ul class="nav nav-justified nav-tabs" role="tablist">
+              <li role="presentation" class="active"><a href="#home" role="tab" data-toggle="tab">Tootspace</a></li>
+              <li role="presentation"><a href="#profile" role="tab" data-toggle="tab">Github</a></li>
+              <li role="presentation"><a href="#settings" role="tab" data-toggle="tab">Amazon S3</a></li>
+              <li role="presentation"><a href="#messages" role="tab" data-toggle="tab">Dropbox</a></li>
+            </ul>
+
+          <!-- Tab panes -->
+          <div class="panel-body tab-content">
+
+            <div role="tabpanel" class="tab-pane active" id="home">
+              <p><a href="#" id="LoginWithAmazonMultiUser"><img border="0" alt="Login with Amazon"
+                src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
+                width="156" height="32" /></a></p>
+
+              <div class="well">
+                <p>Tootr can publish to an experimental shared space that is currently free to use.</p>
+                <p>However, this service may disappear. If you like, you can set up your own service.</p>
+                <p>(<a target="_blank" href="./docs/howto/amazon-tootspace/index.html">Read more...</a>)</p>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="profile">
+              <p><button id="LoginWithGithub" class="btn btn-success btn-lg"><i class="fa fa-github"></i> Login with Github</button></p>
+
+              <div class="well">
+                <p>Tootr can publish to a GitHub repository to take advantage of publishing via GitHub Pages.</p>
+                <p>(<a target="_blank" href="./docs/howto/github-pages/index.html">Read more...</a>)</p>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="messages">
+              <p><button id="LoginWithDropbox" class="btn btn-success btn-lg"><i class="fa fa-dropbox"></i> Login with Dropbox</button></p>
+
+              <div class="well">
+                <p>Tootr can save your toots to Dropbox. What happens from there is up to you!</p>
+                <p>(<a target="_blank" href="./docs/howto/dropbox/index.html">Read more...</a>)</p>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="settings">
+              <form>
+                <label for="keyID">Key ID:</label> <input name="keyID" type="text"><br>
+                <label for="secret">Secret:</label> <input name="secret" type="text"><br>
+                <label for="bucket">Bucket:</label> <input name="bucket" type="text"><br>
+                <p><button id="LoginWithAmazonBucket" class="btn btn-success btn-lg">
+                  <i class="fa fa-cloud-upload"></i> Connect to Amazon S3 Bucket</button></p>
+              </form>
+
+              <div class="well">
+                <p>Tootr can publish to your own bucket on Amazon S3.</p>
+                (<a target="_blank" href="https://lmorchard.github.io/tootr/docs/howto/amazon-s3-bucket/index.html">Read more...</a>)
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
       </section>
-
-    </section>
-
-    <div id="amazon-root"></div>
+    </div>
 
     <script src="app.js"></script>
+
   </body>
 
 </html>
