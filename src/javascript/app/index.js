@@ -54,16 +54,6 @@ function setup (msg, publisher) {
     .find('.avatar img').attr('src', author.avatar)
       .attr('title', author.name).attr('alt', author.name);
 
-  console.log("WOO");
-  $('.login-choices').each(function () {
-    var panel = $(this);
-    console.log(panel);
-    panel.find('.panel-heading .btn').click(function (ev) {
-      var button = $(this);
-      console.log(button.text());
-    });
-  });
-
   $('form#toot').each(function () {
     var f = $(this);
     f.submit(function () {
