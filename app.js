@@ -3400,17 +3400,28 @@ function setup (msg, publisher) {
   author.name = profile.name;
   author.url = profile.url;
 
-  $('.h-card').each(function () {
-    $(this)
-      .addClass('ready')
-      .find('.p-name').text(profile.name).end()
-      .find('.p-nickname').text(profile.nickname).end()
-      .find('.u-url').text(profile.url)
-        .attr('href', profile.url).end();
-  });
+  $('.h-card')
+    .addClass('ready')
+    .find('.p-name').text(profile.name).end()
+    .find('.p-nickname').text(profile.nickname).end()
+    .find('.u-url').text(profile.url)
+      .attr('href', profile.url).end();
 
-  $('header .session .username').attr('href', author.url).text(author.name);
-  $('header .session img.avatar').attr('src', author.avatar);
+  $('.session')
+    .find('a.home').attr('href', author.url).end()
+    .find('a.username').text(author.name).end()
+    .find('.avatar img').attr('src', author.avatar)
+      .attr('title', author.name).attr('alt', author.name);
+
+  console.log("WOO");
+  $('.login-choices').each(function () {
+    var panel = $(this);
+    console.log(panel);
+    panel.find('.panel-heading .btn').click(function (ev) {
+      var button = $(this);
+      console.log(button.text());
+    });
+  });
 
   $('form#toot').each(function () {
     var f = $(this);
@@ -3870,15 +3881,13 @@ var AUTH_NAME = 'AmazonS3MultiUser';
 // TODO: Make this user-configurable - in localstorage?
 var config = _.extend({
   S3_BASE_URL: 'https://s3.amazonaws.com',
-  TOKEN_DURATION: 900
+  TOKEN_DURATION: 900,
+  CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
+  ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
+  BUCKET: 'toots-dev.lmorchard.com',
+  REGISTER_URL: 'https://localhost:9443/amazon/register',
+  PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
 }, {
-  "localhost": {
-    CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
-    ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
-    BUCKET: 'toots-dev.lmorchard.com',
-    REGISTER_URL: 'https://localhost:9443/amazon/register',
-    PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
-  },
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
@@ -4123,10 +4132,15 @@ module.exports = function (publishers, baseModule) {
       });
     };
     (function(d) {
-      var a = d.createElement('script'); a.type = 'text/javascript';
-      a.async = true; a.id = 'amazon-login-sdk';
+      var r = d.createElement('div');
+      r.id = 'amazon-root';
+      d.body.appendChild(r);
+      var a = d.createElement('script');
+      a.type = 'text/javascript';
+      a.async = true;
+      a.id = 'amazon-login-sdk';
       a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
-      d.getElementById('amazon-root').appendChild(a);
+      r.appendChild(a);
     })(document);
   }
 
@@ -4140,10 +4154,8 @@ var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined
 var _ = require('underscore');
 
 var config = _.extend({
+  APP_KEY: 'ovvlu8dh78f0j2m'
 }, {
-  "localhost": {
-    APP_KEY: 'ovvlu8dh78f0j2m'
-  },
   "lmorchard.github.io": {
     APP_KEY: 'w9p1vvnppuhsqzk'
   }
@@ -4245,13 +4257,11 @@ var misc = require('../misc');
 var config = _.extend({
   API_BASE: 'https://api.github.com/',
   API_SCOPE: ['user:email', 'repo', 'gist'],
-  BRANCH_NAME: 'gh-pages'
+  BRANCH_NAME: 'gh-pages',
+  CLIENT_ID: '6d59b16e660e246d3ee5',
+  AUTHENTICATE_URL: 'https://localhost:9443/github/authenticate/',
+  REPO_NAME: 'toots-dev'
 }, {
-  "localhost": {
-    CLIENT_ID: '6d59b16e660e246d3ee5',
-    AUTHENTICATE_URL: 'https://localhost:9443/github/authenticate/',
-    REPO_NAME: 'toots-dev'
-  },
   "lmorchard.github.io": {
     CLIENT_ID: '62a54438d65933d8dc8d',
     AUTHENTICATE_URL: 'https://tootr.herokuapp.com/github/authenticate/',
