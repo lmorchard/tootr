@@ -79,21 +79,28 @@ module.exports = function (publishers, baseModule) {
       type: AUTH_NAME,
       access_token: access_token
     };
+
+    var user_id = null;
+    var profile = null;
+
     $.ajax({
       url: 'https://api.amazon.com/user/profile',
       headers: { 'Authorization': 'bearer ' + access_token }
-    }).fail(function (xhr, status, err) {
-      publishers.clearCurrent();
     }).then(function (data, status, xhr) {
+
+      user_id = data.user_id;
+
       return $.ajax({
         url: config.S3_BASE_URL + '/' + config.BUCKET +
-          '/users/amazon/' + data.user_id + '.json',
+          '/users/amazon/' + user_id + '.json',
         cache: false
       });
-    }).fail(function (xhr, status, err) {
-      AmazonS3MultiUserPublisher.startRegistration(access_token);
-    }).then(function (profile, status, xhr) {
+
+    }).then(function (data, status, xhr) {
+
+      profile = data;
       _.extend(auth, profile);
+
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
         'Action': 'AssumeRoleWithWebIdentity',
         'Version': '2011-06-15',
@@ -103,14 +110,26 @@ module.exports = function (publishers, baseModule) {
         'RoleArn': config.ROLE_ARN,
         'WebIdentityToken': access_token
       }));
-    }).fail(function (xhr, status, err) {
-      publishers.clearCurrent();
+
     }).then(function (dataXML, status, xhr) {
+
       auth.credentials = misc.xmlToObj(dataXML)
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
       publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
+
+    }).fail(function (xhr, status, err) {
+
+      if (user_id && !profile) {
+        // If we have a user_id, then Amazon login is okay. But, if we're
+        // missing a profile then we need to start registration.
+        AmazonS3MultiUserPublisher.startRegistration(access_token);
+      } else {
+        // All other failures in auth refresh lead to logout.
+        publishers.clearCurrent();
+      }
+
     });
   };
 
