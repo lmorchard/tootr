@@ -12,7 +12,7 @@ var config = _.extend({
 }, {
   "lmorchard.github.io": {
     CLIENT_ID: '62a54438d65933d8dc8d',
-    AUTHENTICATE_URL: 'https://tootr.herokuapp.com/github/authenticate/',
+    AUTHENTICATE_URL: 'https://tootr-github-gatekeeper.herokuapp.com/github/authenticate/',
     REPO_NAME: 'toots'
   }
 }[location.hostname]);
