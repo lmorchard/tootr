@@ -3,31 +3,205 @@
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var PubSub = require('pubsub-js');
 var misc = require('./misc');
+var publishers = require('./publishers/index');
+var MD5 = require('MD5');
+
+var _ = require('underscore');
+var PubSub = require('pubsub-js');
+var async = require('async');
+var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+require('timeago');
+
 var publishers = require('./publishers');
+var hentry = require('../templates/hentry');
 
-var body = $('body');
-if (body.hasClass('index')) {
-  require('./app/index')();
-}
+PubSub.subscribe('publishers.setCurrent', setup);
+PubSub.subscribe('publishers.clearCurrent', teardown);
 
-PubSub.subscribe('publishers.setCurrent', function (msg, publisher) {
-  $('body')
-    .addClass('logged-in')
-    .removeClass('logged-out');
-});
-
-PubSub.subscribe('publishers.clearCurrent', function (msg) {
-  $('body')
-    .removeClass('logged-in')
-    .addClass('logged-out');
+$('#showAdvancedLogin').click(function () {
+  $('section.login').toggleClass('advanced');
+  return false;
 });
 
 $('button#logout').click(publishers.logout);
 
 publishers.checkAuth();
 
+var author = { };
+
+// Hidden document used to produce HTML for publishing
+var docIndex = document.implementation.createHTMLDocument('');
+
+function setup (msg, publisher) {
+  $('body').addClass('logged-in').removeClass('logged-out');
+
+  var profile = publishers.getProfile();
+
+  if (profile.avatar) {
+    author.avatar = profile.avatar;
+  } else if (profile.emailHash) {
+    author.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
+  } else if (profile.email) {
+    var hash = MD5.hex_md5(profile.email);
+    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
+  }
+
+  author.email = profile.email;
+  author.nickname = profile.nickname;
+  author.name = profile.name;
+  author.url = profile.url;
+
+  $('.h-card')
+    .addClass('ready')
+    .find('.p-name').text(profile.name).end()
+    .find('.p-nickname').text(profile.nickname).end()
+    .find('.u-url').text(profile.url)
+      .attr('href', profile.url).end();
+
+  $('.session')
+    .find('a.home').attr('href', author.url).end()
+    .find('a.username').text(author.name).end()
+    .find('.avatar img').attr('src', author.avatar)
+      .attr('title', author.name).attr('alt', author.name);
+
+  $('form#toot').each(function () {
+    var f = $(this);
+    f.submit(function () {
+      var textarea = f.find('[name=content]');
+      var content = textarea.val().trim();
+      if (!content) { return; }
+      addToot(publisher, { content: content });
+      saveToots(publisher);
+      textarea.val('');
+      return false;
+    });
+  });
+
+  publisher.list('', function (err, resources) {
+    if (err) {
+      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
+      return;
+    }
+    if ('index.html' in resources) {
+      return loadToots(publisher);
+    } else {
+      return firstRun(publisher);
+    }
+  });
+}
+
+function teardown (msg) {
+  $('body').removeClass('logged-in').addClass('logged-out');
+  $('#entries').empty();
+}
+
+function firstRun (publisher) {
+  console.log("Performing first run");
+  var assets = [
+    {src: 'site.html', dest: 'index.html'},
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+      if (asset.src == 'site.html') {
+        docIndex.documentElement.innerHTML = content;
+      }
+    });
+  }, function (err) {
+    if (err) {
+      console.log("First run error: " + err);
+    }
+  });
+}
+
+function addToot (publisher, data) {
+  data.author = data.author || author;
+  data.published = data.published || (new Date()).toISOString();
+  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
+  data.permalink = '#' + data.id;
+
+  var entry = $(hentry(data));
+  $('#entries').prepend(entry);
+  entry.find('time.timeago').timeago();
+}
+
+function loadToots (publisher) {
+
+  // Fetch the toots from the publisher.
+  publisher.get('index.html', function (err, content) {
+
+    // Load the toot source into hidden source document
+    docIndex.documentElement.innerHTML = content;
+
+    // Clean out the destination.
+    var dest = document.querySelector('#entries');
+    while (dest.firstChild) {
+      dest.removeChild(dest.firstChild);
+    }
+
+    // Copy entry nodes from source to destination.
+    var src = docIndex.querySelector('#entries');
+    for (var i=0; i<src.childNodes.length; i++) {
+      dest.appendChild(src.childNodes[i].cloneNode(true));
+    }
+
+    // Make the timestamps all fancy!
+    $('time.timeago').timeago();
+
+  });
+
+}
+
+function saveToots (publisher) {
+
+  // Clean out the destination
+  var dest = docIndex.querySelector('#entries');
+  while (dest.firstChild) {
+    dest.removeChild(dest.firstChild);
+  }
+
+  // Copy entry nodes from source to destination
+  var src = document.querySelector('#entries');
+  for (var i=0; i<src.childNodes.length; i++) {
+    dest.appendChild(src.childNodes[i].cloneNode(true));
+  }
+
+  // Clean up any .ui-only elements used for editing & etc.
+  var ui = docIndex.querySelectorAll('.ui-only');
+  for (var i=0; i<ui.length; i++) {
+    ui[i].parentNode.removeChild(ui[i]);
+  };
+
+  // Serialize the HTML and publish it!
+  var content = docIndex.documentElement.outerHTML;
+  publisher.put('index.html', content, function (err) {
+    if (err) {
+      console.log("ERROR SAVING TOOTS " + err);
+    } else {
+      console.log("Saved toots");
+      pingTootHub();
+    }
+  });
+
+}
+
+function pingTootHub () {
+  $.ajax({
+    type: 'POST',
+    url: 'https://localhost:4040/api/ping',
+    json: true,
+    data: { url: author.url }
+  }).then(function (data, status, xhr) {
+    console.log('Ping sent');
+  }).fail(function (xhr, status, err) {
+    console.error(err);
+  });
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./app/index":"/home/lmorchard/devel/tootr/src/javascript/app/index.js","./misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","./publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js"}],"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
+},{"../templates/hentry":"/home/lmorchard/devel/tootr/src/templates/hentry.hbs","./misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","./publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js","./publishers/index":"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js","MD5":"/home/lmorchard/devel/tootr/src/javascript/vendor/md5.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
 (function (process){
 /*!
  * async
@@ -3355,211 +3529,7 @@ https://github.com/mroderick/PubSubJS
   }
 }.call(this));
 
-},{}],"/home/lmorchard/devel/tootr/src/javascript/app/index.js":[function(require,module,exports){
-(function (global){
-var MD5 = require('MD5');
-
-var _ = require('underscore');
-var PubSub = require('pubsub-js');
-var async = require('async');
-var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
-require('timeago');
-
-var publishers = require('../publishers');
-var hentry = require('../../templates/hentry');
-
-module.exports = function () {
-  PubSub.subscribe('publishers.setCurrent', setup);
-  PubSub.subscribe('publishers.clearCurrent', teardown);
-
-  $('#showAdvancedLogin').click(function () {
-    $('section.login').toggleClass('advanced');
-    return false;
-  });
-};
-
-var author = { };
-
-// Hidden document used to produce HTML for publishing
-var docIndex = document.implementation.createHTMLDocument('');
-
-function setup (msg, publisher) {
-  var profile = publishers.getProfile();
-
-  if (profile.avatar) {
-    author.avatar = profile.avatar;
-  } else if (profile.emailHash) {
-    author.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
-  } else if (profile.email) {
-    var hash = MD5.hex_md5(profile.email);
-    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
-  }
-
-  author.email = profile.email;
-  author.nickname = profile.nickname;
-  author.name = profile.name;
-  author.url = profile.url;
-
-  $('.h-card')
-    .addClass('ready')
-    .find('.p-name').text(profile.name).end()
-    .find('.p-nickname').text(profile.nickname).end()
-    .find('.u-url').text(profile.url)
-      .attr('href', profile.url).end();
-
-  $('.session')
-    .find('a.home').attr('href', author.url).end()
-    .find('a.username').text(author.name).end()
-    .find('.avatar img').attr('src', author.avatar)
-      .attr('title', author.name).attr('alt', author.name);
-
-  console.log("WOO");
-  $('.login-choices').each(function () {
-    var panel = $(this);
-    console.log(panel);
-    panel.find('.panel-heading .btn').click(function (ev) {
-      var button = $(this);
-      console.log(button.text());
-    });
-  });
-
-  $('form#toot').each(function () {
-    var f = $(this);
-    f.submit(function () {
-      var textarea = f.find('[name=content]');
-      var content = textarea.val().trim();
-      if (!content) { return; }
-      addToot(publisher, { content: content });
-      saveToots(publisher);
-      textarea.val('');
-      return false;
-    });
-  });
-
-  publisher.list('', function (err, resources) {
-    if (err) {
-      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
-      return;
-    }
-    if ('index.html' in resources) {
-      return loadToots(publisher);
-    } else {
-      return firstRun(publisher);
-    }
-  });
-}
-
-function teardown (msg) {
-  $('#entries').empty();
-}
-
-function firstRun (publisher) {
-  console.log("Performing first run");
-  var assets = [
-    {src: 'site.html', dest: 'index.html'},
-    {src: 'site.css', dest: 'site.css'},
-    {src: 'site.js', dest: 'site.js'}
-  ];
-  async.each(assets, function (asset, next) {
-    $.get(asset.src, function (content) {
-      publisher.put(asset.dest, content, next);
-      if (asset.src == 'site.html') {
-        docIndex.documentElement.innerHTML = content;
-      }
-    });
-  }, function (err) {
-    if (err) {
-      console.log("First run error: " + err);
-    }
-  });
-}
-
-function addToot (publisher, data) {
-  data.author = data.author || author;
-  data.published = data.published || (new Date()).toISOString();
-  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
-  data.permalink = '#' + data.id;
-
-  var entry = $(hentry(data));
-  $('#entries').prepend(entry);
-  entry.find('time.timeago').timeago();
-}
-
-function loadToots (publisher) {
-
-  // Fetch the toots from the publisher.
-  publisher.get('index.html', function (err, content) {
-
-    // Load the toot source into hidden source document
-    docIndex.documentElement.innerHTML = content;
-
-    // Clean out the destination.
-    var dest = document.querySelector('#entries');
-    while (dest.firstChild) {
-      dest.removeChild(dest.firstChild);
-    }
-
-    // Copy entry nodes from source to destination.
-    var src = docIndex.querySelector('#entries');
-    for (var i=0; i<src.childNodes.length; i++) {
-      dest.appendChild(src.childNodes[i].cloneNode(true));
-    }
-
-    // Make the timestamps all fancy!
-    $('time.timeago').timeago();
-
-  });
-
-}
-
-function saveToots (publisher) {
-
-  // Clean out the destination
-  var dest = docIndex.querySelector('#entries');
-  while (dest.firstChild) {
-    dest.removeChild(dest.firstChild);
-  }
-
-  // Copy entry nodes from source to destination
-  var src = document.querySelector('#entries');
-  for (var i=0; i<src.childNodes.length; i++) {
-    dest.appendChild(src.childNodes[i].cloneNode(true));
-  }
-
-  // Clean up any .ui-only elements used for editing & etc.
-  var ui = docIndex.querySelectorAll('.ui-only');
-  for (var i=0; i<ui.length; i++) {
-    ui[i].parentNode.removeChild(ui[i]);
-  };
-
-  // Serialize the HTML and publish it!
-  var content = docIndex.documentElement.outerHTML;
-  publisher.put('index.html', content, function (err) {
-    if (err) {
-      console.log("ERROR SAVING TOOTS " + err);
-    } else {
-      console.log("Saved toots");
-      pingTootHub();
-    }
-  });
-
-}
-
-function pingTootHub () {
-  $.ajax({
-    type: 'POST',
-    url: 'https://localhost:4443/api/ping',
-    json: true,
-    data: { url: author.url }
-  }).then(function (data, status, xhr) {
-    console.log('Ping sent');
-  }).fail(function (xhr, status, err) {
-    console.error(err);
-  });
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../../templates/hentry":"/home/lmorchard/devel/tootr/src/templates/hentry.hbs","../publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers.js","MD5":"/home/lmorchard/devel/tootr/src/javascript/vendor/md5.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/misc.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/src/javascript/misc.js":[function(require,module,exports){
 module.exports.getQueryParameters = function (str) {
   return (str || document.location.search)
     .replace(/(^\?)/,'').split("&")
@@ -3611,91 +3581,7 @@ module.exports.xmlToObj = function (parent, force_lists, path) {
   return (is_struct) ? obj : cdata;
 }
 
-},{}],"/home/lmorchard/devel/tootr/src/javascript/publishers.js":[function(require,module,exports){
-(function (global){
-var _ = require('underscore');
-var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
-var PubSub = require('pubsub-js');
-var async = require('async');
-
-var publishers = module.exports = {};
-
-var LOCAL_PROFILE_KEY = 'profile20141102';
-
-publishers.checkAuth = function () {
-  var profile = publishers.getProfile();
-
-  var check = [];
-  if (profile && profile.type in modules) {
-    check.push(publishers[profile.type]);
-  } else {
-    for (var name in modules) {
-      check.push(publishers[name]);
-    }
-  }
-
-  async.each(check, function (m, next) {
-    m.checkAuth(next);
-  }, function (err) {
-    if (!publishers.current) {
-      publishers.clearCurrent();
-    }
-  });
-};
-
-publishers.getProfile = function () {
-  var profile = null;
-  try {
-    profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
-  } catch (e) {
-    /* No-op */
-  }
-  return profile;
-}
-
-publishers.setCurrent = function (profile, publisher) {
-  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
-  publishers.current = publisher;
-  PubSub.publish('publishers.setCurrent', publisher);
-};
-
-publishers.clearCurrent = function () {
-  publishers.current = null;
-  localStorage.removeItem(LOCAL_PROFILE_KEY);
-  PubSub.publish('publishers.clearCurrent');
-}
-
-publishers.logout = function () {
-  if (!publishers.current) { return; }
-  publishers.current.startLogout();
-};
-
-var baseModule = function () {
-  var constructor = function () {
-    this.init.apply(this, arguments);
-  };
-  constructor.defaults = {};
-  constructor.__base__ = {
-    init: function (options) {
-      this.options = _.defaults(options || {}, constructor.defaults);
-    }
-  };
-  _.extend(constructor.prototype, constructor.__base__);
-  return constructor;
-};
-
-var modules = {
-  'AmazonS3Bucket': require('./publishers/AmazonS3Bucket'),
-  'AmazonS3MultiUser': require('./publishers/AmazonS3MultiUser'),
-  'Dropbox': require('./publishers/Dropbox'),
-  'Github': require('./publishers/Github')
-};
-for (var name in modules) {
-  publishers[name] = modules[name](publishers, baseModule);
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./publishers/AmazonS3Bucket":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js","./publishers/AmazonS3MultiUser":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js","./publishers/Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./publishers/Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js":[function(require,module,exports){
 (function (global){
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var _ = require('underscore');
@@ -3885,15 +3771,15 @@ var config = _.extend({
   CLIENT_ID: 'amzn1.application-oa2-client.c64da1621c67449ab764c4cdf2f99761',
   ROLE_ARN: 'arn:aws:iam::197006402464:role/tootr-dev-users',
   BUCKET: 'toots-dev.lmorchard.com',
-  REGISTER_URL: 'https://localhost:9443/amazon/register',
-  PRESIGNER_URL: 'https://localhost:9443/amazon/presigned'
+  REGISTER_URL: 'https://localhost:2443/register',
+  PRESIGNER_URL: 'https://localhost:2443/presigned'
 }, {
   "lmorchard.github.io": {
     CLIENT_ID: 'amzn1.application-oa2-client.d3ce7b272419457abf84b88a9d7d6bd3',
     ROLE_ARN: 'arn:aws:iam::197006402464:role/tootsr-amazon-user-buckets',
     BUCKET: 'toots.lmorchard.com',
-    REGISTER_URL: 'https://tootr.herokuapp.com/amazon/register',
-    PRESIGNER_URL: 'https://tootr.herokuapp.com/amazon/presigned'
+    REGISTER_URL: 'https://tootspace-s3.herokuapp.com/register',
+    PRESIGNER_URL: 'https://tootspace-s3.herokuapp.com/presigned'
   }
 }[location.hostname]);
 
@@ -3951,21 +3837,28 @@ module.exports = function (publishers, baseModule) {
       type: AUTH_NAME,
       access_token: access_token
     };
+
+    var user_id = null;
+    var profile = null;
+
     $.ajax({
       url: 'https://api.amazon.com/user/profile',
       headers: { 'Authorization': 'bearer ' + access_token }
-    }).fail(function (xhr, status, err) {
-      publishers.clearCurrent();
     }).then(function (data, status, xhr) {
+
+      user_id = data.user_id;
+
       return $.ajax({
         url: config.S3_BASE_URL + '/' + config.BUCKET +
-          '/users/amazon/' + data.user_id + '.json',
+          '/users/amazon/' + user_id + '.json',
         cache: false
       });
-    }).fail(function (xhr, status, err) {
-      AmazonS3MultiUserPublisher.startRegistration(access_token);
-    }).then(function (profile, status, xhr) {
+
+    }).then(function (data, status, xhr) {
+
+      profile = data;
       _.extend(auth, profile);
+
       return $.ajax('https://sts.amazonaws.com/?' + $.param({
         'Action': 'AssumeRoleWithWebIdentity',
         'Version': '2011-06-15',
@@ -3975,14 +3868,26 @@ module.exports = function (publishers, baseModule) {
         'RoleArn': config.ROLE_ARN,
         'WebIdentityToken': access_token
       }));
-    }).fail(function (xhr, status, err) {
-      publishers.clearCurrent();
+
     }).then(function (dataXML, status, xhr) {
+
       auth.credentials = misc.xmlToObj(dataXML)
         .AssumeRoleWithWebIdentityResponse
         .AssumeRoleWithWebIdentityResult
         .Credentials;
       publishers.setCurrent(auth, new AmazonS3MultiUserPublisher(auth));
+
+    }).fail(function (xhr, status, err) {
+
+      if (user_id && !profile) {
+        // If we have a user_id, then Amazon login is okay. But, if we're
+        // missing a profile then we need to start registration.
+        AmazonS3MultiUserPublisher.startRegistration(access_token);
+      } else {
+        // All other failures in auth refresh lead to logout.
+        publishers.clearCurrent();
+      }
+
     });
   };
 
@@ -4264,7 +4169,7 @@ var config = _.extend({
 }, {
   "lmorchard.github.io": {
     CLIENT_ID: '62a54438d65933d8dc8d',
-    AUTHENTICATE_URL: 'https://tootr.herokuapp.com/github/authenticate/',
+    AUTHENTICATE_URL: 'https://tootr-github-gatekeeper.herokuapp.com/github/authenticate/',
     REPO_NAME: 'toots'
   }
 }[location.hostname]);
@@ -4452,7 +4357,91 @@ module.exports = function (publishers, baseModule) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
+},{"../misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js":[function(require,module,exports){
+(function (global){
+var _ = require('underscore');
+var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+var PubSub = require('pubsub-js');
+var async = require('async');
+
+var publishers = module.exports = {};
+
+var LOCAL_PROFILE_KEY = 'profile20141102';
+
+publishers.checkAuth = function () {
+  var profile = publishers.getProfile();
+
+  var check = [];
+  if (profile && profile.type in modules) {
+    check.push(publishers[profile.type]);
+  } else {
+    for (var name in modules) {
+      check.push(publishers[name]);
+    }
+  }
+
+  async.each(check, function (m, next) {
+    m.checkAuth(next);
+  }, function (err) {
+    if (!publishers.current) {
+      publishers.clearCurrent();
+    }
+  });
+};
+
+publishers.getProfile = function () {
+  var profile = null;
+  try {
+    profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
+  } catch (e) {
+    /* No-op */
+  }
+  return profile;
+}
+
+publishers.setCurrent = function (profile, publisher) {
+  localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
+  publishers.current = publisher;
+  PubSub.publish('publishers.setCurrent', publisher);
+};
+
+publishers.clearCurrent = function () {
+  publishers.current = null;
+  localStorage.removeItem(LOCAL_PROFILE_KEY);
+  PubSub.publish('publishers.clearCurrent');
+}
+
+publishers.logout = function () {
+  if (!publishers.current) { return; }
+  publishers.current.startLogout();
+};
+
+var baseModule = function () {
+  var constructor = function () {
+    this.init.apply(this, arguments);
+  };
+  constructor.defaults = {};
+  constructor.__base__ = {
+    init: function (options) {
+      this.options = _.defaults(options || {}, constructor.defaults);
+    }
+  };
+  _.extend(constructor.prototype, constructor.__base__);
+  return constructor;
+};
+
+var modules = {
+  'AmazonS3Bucket': require('./AmazonS3Bucket'),
+  'AmazonS3MultiUser': require('./AmazonS3MultiUser'),
+  'Dropbox': require('./Dropbox'),
+  'Github': require('./Github')
+};
+for (var name in modules) {
+  publishers[name] = modules[name](publishers, baseModule);
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./AmazonS3Bucket":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js","./AmazonS3MultiUser":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js","./Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 //  S3Ajax v0.1 - An AJAX wrapper package for Amazon S3
