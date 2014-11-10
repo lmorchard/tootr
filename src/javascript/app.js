@@ -10,6 +10,14 @@ var async = require('async');
 var $ = require('jquery');
 require('timeago');
 
+var config = _.extend({
+  HUB_PING_URL: 'https://localhost:4040/api/ping'
+}, {
+  "lmorchard.github.io": {
+    HUB_PING_URL: 'https://toothub.herokuapp.com/api/ping'
+  }
+}[location.hostname]);
+
 var publishers = require('./publishers');
 var hentry = require('../templates/hentry');
 
@@ -188,7 +196,7 @@ function saveToots (publisher) {
 function pingTootHub () {
   $.ajax({
     type: 'POST',
-    url: 'https://localhost:4040/api/ping',
+    url: config.HUB_PING_URL,
     json: true,
     data: { url: author.url }
   }).then(function (data, status, xhr) {
