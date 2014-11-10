@@ -6,3 +6,5 @@ build
 .awspublish-*
 config-aws.json
 config-server.json
+config.json
+config.js

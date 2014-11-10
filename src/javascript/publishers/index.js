@@ -70,10 +70,10 @@ var baseModule = function () {
 };
 
 var modules = {
-  'AmazonS3Bucket': require('./publishers/AmazonS3Bucket'),
-  'AmazonS3MultiUser': require('./publishers/AmazonS3MultiUser'),
-  'Dropbox': require('./publishers/Dropbox'),
-  'Github': require('./publishers/Github')
+  'AmazonS3Bucket': require('./AmazonS3Bucket'),
+  'AmazonS3MultiUser': require('./AmazonS3MultiUser'),
+  'Dropbox': require('./Dropbox'),
+  'Github': require('./Github')
 };
 for (var name in modules) {
   publishers[name] = modules[name](publishers, baseModule);

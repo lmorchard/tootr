@@ -47,11 +47,13 @@ module.exports = {
         dest: dest,
         outputName: 'app.js'
       },
+      /*
       {
         entries: './src/javascript/head.js',
         dest: dest,
         outputName: 'head.js'
       },
+      */
       {
         entries: './src/javascript/site.js',
         dest: dest,

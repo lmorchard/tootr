@@ -6,6 +6,9 @@
 
 ## TODO
 
+* Better config
+  * Pull config out of modules, put into a shared .json / .js at project root.
+
 * General UX
   * Need network loading indicators
   * Remember last publisher logged in
@@ -23,12 +26,18 @@
   * webdav (?)
   * ???
 
-* AmazonMultiUser
-  * Accept Facebook & Google WIF logins?
-  * Expand broker server to accept other identities?
-
 * Archives
   * collate toots into HTML feeds by date yyyy/mm/dd.html
     * index.html alias / copy for current date?
 
 * Importer for Twitter archive CSV / JSON
+
+## Blue Sky
+
+* Accept "plugin" publishers as external JS libs following publisher API hosted
+  by 3rd parties. (use .well-known?)
+
+* Cross-site things
+  * Bookmarklet? window.postMessage + shared domain
+  * re-tooting
+  * following

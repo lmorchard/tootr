@@ -20,7 +20,6 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
-    <script src="head.js"></script>
 
   </head>
 
@@ -96,16 +95,16 @@
 
           <!-- Nav tabs -->
             <ul class="nav nav-justified nav-tabs" role="tablist">
-              <li role="presentation" class="active"><a href="#home" role="tab" data-toggle="tab">Tootspace</a></li>
-              <li role="presentation"><a href="#profile" role="tab" data-toggle="tab">Github</a></li>
-              <li role="presentation"><a href="#settings" role="tab" data-toggle="tab">Amazon S3</a></li>
-              <li role="presentation"><a href="#messages" role="tab" data-toggle="tab">Dropbox</a></li>
+              <li role="presentation" class="active"><a href="#tootspace" role="tab" data-toggle="tab">toots.lmorchard.com</a></li>
+              <li role="presentation"><a href="#github" role="tab" data-toggle="tab">Github</a></li>
+              <li role="presentation"><a href="#s3" role="tab" data-toggle="tab">Amazon S3</a></li>
+              <li role="presentation"><a href="#dropbox" role="tab" data-toggle="tab">Dropbox</a></li>
             </ul>
 
           <!-- Tab panes -->
           <div class="panel-body tab-content">
 
-            <div role="tabpanel" class="tab-pane active" id="home">
+            <div role="tabpanel" class="tab-pane active" id="tootspace">
               <p><a href="#" id="LoginWithAmazonMultiUser"><img border="0" alt="Login with Amazon"
                 src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
                 width="156" height="32" /></a></p>
@@ -117,7 +116,7 @@
               </div>
             </div>
 
-            <div role="tabpanel" class="tab-pane" id="profile">
+            <div role="tabpanel" class="tab-pane" id="github">
               <p><button id="LoginWithGithub" class="btn btn-success btn-lg"><i class="fa fa-github"></i> Login with Github</button></p>
 
               <div class="well">
@@ -126,7 +125,7 @@
               </div>
             </div>
 
-            <div role="tabpanel" class="tab-pane" id="messages">
+            <div role="tabpanel" class="tab-pane" id="dropbox">
               <p><button id="LoginWithDropbox" class="btn btn-success btn-lg"><i class="fa fa-dropbox"></i> Login with Dropbox</button></p>
 
               <div class="well">
@@ -135,7 +134,7 @@
               </div>
             </div>
 
-            <div role="tabpanel" class="tab-pane" id="settings">
+            <div role="tabpanel" class="tab-pane" id="s3">
               <form>
                 <label for="keyID">Key ID:</label> <input name="keyID" type="text"><br>
                 <label for="secret">Secret:</label> <input name="secret" type="text"><br>
