@@ -16,7 +16,7 @@ var config = _.extend({
   HUB_PING_URL: 'https://localhost:4040/api/ping'
 }, {
   "lmorchard.github.io": {
-    HUB_PING_URL: 'https://toothub-dev.herokuapp.com/api/ping'
+    HUB_PING_URL: 'https://toothub.herokuapp.com/api/ping'
   }
 }[location.hostname]);
 
