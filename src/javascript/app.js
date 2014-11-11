@@ -2,6 +2,8 @@ var $ = require('jquery');
 var PubSub = require('pubsub-js');
 var misc = require('./misc');
 var publishers = require('./publishers/index');
+var microformats = require('microformat-shiv').microformats;
+window.microformats = microformats;
 var MD5 = require('MD5');
 
 var _ = require('underscore');
@@ -30,6 +32,9 @@ $('#showAdvancedLogin').click(function () {
 });
 
 $('button#logout').click(publishers.logout);
+
+$('button#profileEdit').click(profileEdit);
+$('button#profileEditDone').click(profileEditDone);
 
 publishers.checkAuth();
 
@@ -60,13 +65,12 @@ function setup (msg, publisher) {
   $('.h-card')
     .addClass('ready')
     .find('.p-name').text(profile.name).end()
-    .find('.p-nickname').text(profile.nickname).end()
-    .find('.u-url').text(profile.url)
-      .attr('href', profile.url).end();
+    .find('.u-url').attr('href', profile.url).end()
+    .find('.p-nickname').text(profile.nickname).end();
 
   $('.session')
     .find('a.home').attr('href', author.url).end()
-    .find('a.username').text(author.name).end()
+    .find('a.username').text(author.nickname).end()
     .find('.avatar img').attr('src', author.avatar)
       .attr('title', author.name).attr('alt', author.name);
 
@@ -204,4 +208,35 @@ function pingTootHub () {
   }).fail(function (xhr, status, err) {
     console.error(err);
   });
+}
+
+var elAbout = $('section#about');
+var hcard = elAbout.find('dl.h-card');
+
+function profileEdit () {
+  elAbout.addClass('editing');
+
+  hcard.find('dd').each(function () {
+    var dd = $(this);
+    var field;
+    if (dd.hasClass('readonly')) {
+      return;
+    } else if (dd.hasClass('textarea')) {
+      field = $('<textarea class="ui-only form-control"></textarea>');
+    } else {
+      field = $('<input type="text" class="ui-only form-control">');
+    }
+    dd.after(field);
+    field.val(dd.html().trim());
+    field.change(function (ev) {
+      dd.html(field.val());
+    });
+  });
+
+  hcard.find('input, textarea').eq(0).focus();
+}
+
+function profileEditDone () {
+  elAbout.find('.ui-only').remove();
+  elAbout.removeClass('editing');
 }
