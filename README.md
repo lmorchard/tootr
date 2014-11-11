@@ -6,8 +6,21 @@
 
 ## TODO
 
+* Profile
+  * Edit fields like bio, etc.
+  * Upload image other than gravatar
+
 * Better config
   * Pull config out of modules, put into a shared .json / .js at project root.
+
+* Need a way to "upgrade" the published feed template
+  * eg. for markup-affecting themes, etc
+
+* Dev papercuts
+  * Start instance of lmorchard/tootspace-s3 from gulp watch
+  * Start instance of prose/gatekeeper from gulp watch
+  * Maybe start `mkdocs serve` too?
+  * Commit a self-signed SSL key/cert pair for localhost dev convenience?
 
 * General UX
   * Need network loading indicators
@@ -17,10 +30,6 @@
 * Toots
   * edit
   * delete
-
-* Profile
-  * Edit fields like bio, etc.
-  * Upload image other than gravatar
 
 * Publishers
   * webdav (?)
