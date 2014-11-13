@@ -1,5 +1,5 @@
 #sidebar #about {
-  font-size: 0.85em;
+  font-size: 0.8em;
   background: #efefef;
   border: 1px solid #ccc;
   margin: 1em 0 1em 0;
@@ -53,8 +53,8 @@
   margin: 0 0 0.25em 0;
   padding: 0;
 }
-.h-entry header a.u-url:before {
-  content: "\2219";
+.h-entry header .dt-published:before {
+  content: " ∙ ";
 }
 .h-entry header .h-card a.u-url:before {
   content: "";

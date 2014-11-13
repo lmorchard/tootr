@@ -63,23 +63,23 @@
       <div class="col-md-8">
         <form id="toot">
           <textarea name="content"></textarea>
-          <button class="btn btn-success btn-lg" name="commit">toot!</button>
+          <button class="btn btn-primary btn-lg" name="commit">toot!</button>
         </form>
         <section id="entries"></section>
       </div>
 
       <aside class="col-md-4" id="sidebar">
         <section id="about">
+          <button id="profileEdit" type="button" class="btn btn-primary btn-sm">Edit</button>
+          <button id="profileEditDone" type="button" class="btn btn-success btn-sm">Done</button>
           <dl class="h-card">
-            <dt>Name</dt>
-              <dd class="p-name"></dd>
             <dt>Nickname</dt>
-              <dd class="p-nickname"></dd>
-            <dt>Web</dt>
-              <dd><a href="#" target="_blank" class="u-url"></a></dd>
+              <dd class="readonly"><a class="p-nickname u-url" href=""></a></dd>
+            <dt>Name</dt>
+              <dd class="p-name text"></dd>
             <dt>Bio</dt>
-              <dd class="p-note">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut quis laoreet felis. Curabitur mattis at augue non efficitur. Aenean egestas consectetur euismod.</p>
+              <dd class="p-note textarea">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut quis laoreet felis. Curabitur mattis at augue non efficitur. Aenean egestas consectetur euismod.
               </dd>
           </dl>
         </section>

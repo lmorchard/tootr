@@ -75,6 +75,84 @@ ul.session li {
 .login-choices .panel-body {
   text-align: center;
 }
+section#about {
+  position: relative;
+}
+section#about button {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: none;
+}
+section#about button#profileEdit {
+  display: block;
+}
+section#about.editing button#profileEdit {
+  display: none;
+}
+section#about.editing button#profileEditDone {
+  display: block;
+}
+section#about.editing .h-card dd {
+  display: none;
+}
+section#about.editing .h-card dd.readonly {
+  display: block;
+}
+section#about.editing .h-card dd.readonly:after {
+  content: ' (read-only)';
+  opacity: 0.7;
+}
+section#about.editing .h-card input {
+  width: 100%;
+  font-size: inherit;
+  line-height: inherit;
+  height: inherit;
+  padding: 0px;
+  border: none;
+  margin: 0 0 0.5em;
+}
+section#about.editing .h-card textarea {
+  display: block;
+  border: 1px solid #ccc;
+  width: 100%;
+  height: 5.5em;
+  line-height: inherit;
+  font-size: inherit;
+  padding: 0px;
+  border: none;
+  margin: 0 0 0.5em;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+button.btn-xs {
+  padding: 2px 6px;
+}
+.undo-delete .panel-body {
+  text-align: center;
+}
+.undo-delete .panel-body .h-entry {
+  display: none;
+}
+.h-entry header button.ui-only {
+  margin: 0 2px;
+}
+.h-entry button.entry-edit-done {
+  display: none;
+}
+.h-entry.editing button.entry-edit-done {
+  display: inline;
+}
+.h-entry.editing button.entry-edit {
+  display: none;
+}
+.h-entry.editing button.entry-delete {
+  display: none;
+}
+.h-entry.editing .e-content {
+  display: none;
+}
 @media screen and (max-width: 970px) {
   .session .show-username {
     display: none;
