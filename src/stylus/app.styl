@@ -137,17 +137,25 @@ button.btn-xs {
   header {
     button.ui-only {
       margin: 0 2px;
-      opacity: 0;
+      // opacity: 0;
     }
   }
+  button.entry-edit-done { display: none; }
 }
 
 .h-entry:hover {
   header {
     button.ui-only {
-      opacity: 1;
+      // opacity: 1;
     }
   }
+}
+
+.h-entry.editing {
+  button.entry-edit-done { display: inline; }
+  button.entry-edit { display: none; }
+  button.entry-delete { display: none; }
+  .e-content { display: none; }
 }
 
 @media screen and (max-width: 970px) {

@@ -33,41 +33,6 @@ $('#showAdvancedLogin').click(function () {
 
 $('button#logout').click(publishers.logout);
 
-$('button#profileEdit').click(profileEdit);
-
-$('button#profileEditDone').click(profileEditDone);
-
-$('#entries').delegate('button.entry-delete', 'click', function () {
-  var button = $(this);
-  var entry = button.parents('.h-entry');
-  entry.fadeOut(function () {
-    // entry.remove();
-    var undo = $('<div class="undo-delete panel panel-default">' +
-      '<div class="panel-body">' +
-      'Entry deleted. <button class="entry-undo-delete btn btn-success btn-xs">Undo?</button>' +
-      '</div>' +
-      '</div>');
-    entry.after(undo);
-    undo.find('.panel-body').append(entry);
-  });
-});
-
-$('#entries').delegate('button.entry-undo-delete', 'click', function () {
-  var button = $(this);
-  var panel = button.parents('.panel.undo-delete');
-  var entry = panel.find('.h-entry');
-  console.log(entry);
-  panel.fadeOut(function () {
-    entry.insertAfter(panel).fadeIn();
-    panel.remove();
-  });
-});
-
-$('#entries').delegate('button.entry-edit', 'click', function () {
-  var button = $(this);
-  var entry = button.parents('.h-entry');
-});
-
 publishers.checkAuth();
 
 var author = { };
@@ -117,6 +82,62 @@ function setup (msg, publisher) {
       textarea.val('');
       return false;
     });
+  });
+
+  $('button#profileEdit').click(profileEdit);
+
+  $('button#profileEditDone').click(profileEditDone);
+
+  $('#entries').delegate('button.entry-delete', 'click', function () {
+    var button = $(this);
+    var entry = button.parents('.h-entry');
+    entry.fadeOut(function () {
+      var undo = $(
+        '<div class="undo-delete panel panel-default"><div class="panel-body">' +
+        'Entry deleted. ' +
+        '<button class="entry-undo-delete btn btn-success btn-sm">Undo?</button>' +
+        '</div></div>');
+      entry.after(undo);
+      undo.find('.panel-body').append(entry);
+      saveToots(publisher);
+    });
+  });
+
+  $('#entries').delegate('button.entry-undo-delete', 'click', function () {
+    var button = $(this);
+    var panel = button.parents('.panel.undo-delete');
+    var entry = panel.find('.h-entry');
+    console.log(entry);
+    panel.fadeOut(function () {
+      entry.insertAfter(panel).fadeIn(function () {
+        panel.remove();
+        saveToots(publisher);
+      });
+    });
+  });
+
+  $('#entries').delegate('button.entry-edit', 'click', function () {
+    var button = $(this);
+    var entry = button.parents('.h-entry');
+    var field = $('<textarea class="ui-only form-control"></textarea>');
+    var content = entry.find('.e-content');
+
+    entry.addClass('editing');
+    field.insertAfter(content).val(content.html()).change(function () {
+      content.html(field.val());
+    });
+  });
+
+  $('#entries').delegate('button.entry-edit-done', 'click', function () {
+    var button = $(this);
+    var entry = button.parents('.h-entry');
+    var field = entry.find('textarea');
+    var content = entry.find('.e-content');
+
+    entry.removeClass('editing');
+    content.html(field.val());
+    saveToots(publisher);
+    field.remove();
   });
 
   publisher.list('', function (err, resources) {
@@ -281,10 +302,13 @@ function injectEntryUI () {
     var entry = $(this);
     var header = entry.find('header');
 
-    var uis = header.find('.ui-only');
+    var uis = entry.find('.ui-only');
     if (uis.length) { return; }
 
-    header.append('<button class="ui-only entry-edit btn btn-success btn-xs">Edit</button>');
-    header.append('<button class="ui-only entry-delete btn btn-danger btn-xs">Delete</button>');
+    var content = entry.find('.e-content');
+
+    content.after('<button class="ui-only entry-edit btn btn-success btn-sm">Edit</button>');
+    content.after('<button class="ui-only entry-edit-done btn btn-primary btn-sm">Done</button>');
+    content.after('<button class="ui-only entry-delete btn btn-danger btn-sm">Delete</button>');
   });
 }
