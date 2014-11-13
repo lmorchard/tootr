@@ -122,6 +122,34 @@ section#about {
   }
 }
 
+button.btn-xs {
+  padding: 2px 6px;
+}
+
+.undo-delete .panel-body {
+  text-align: center;
+  .h-entry {
+    display: none;
+  }
+}
+
+.h-entry {
+  header {
+    button.ui-only {
+      margin: 0 2px;
+      opacity: 0;
+    }
+  }
+}
+
+.h-entry:hover {
+  header {
+    button.ui-only {
+      opacity: 1;
+    }
+  }
+}
+
 @media screen and (max-width: 970px) {
   .session .show-username { display: none; }
 }

@@ -34,7 +34,39 @@ $('#showAdvancedLogin').click(function () {
 $('button#logout').click(publishers.logout);
 
 $('button#profileEdit').click(profileEdit);
+
 $('button#profileEditDone').click(profileEditDone);
+
+$('#entries').delegate('button.entry-delete', 'click', function () {
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+  entry.fadeOut(function () {
+    // entry.remove();
+    var undo = $('<div class="undo-delete panel panel-default">' +
+      '<div class="panel-body">' +
+      'Entry deleted. <button class="entry-undo-delete btn btn-success btn-xs">Undo?</button>' +
+      '</div>' +
+      '</div>');
+    entry.after(undo);
+    undo.find('.panel-body').append(entry);
+  });
+});
+
+$('#entries').delegate('button.entry-undo-delete', 'click', function () {
+  var button = $(this);
+  var panel = button.parents('.panel.undo-delete');
+  var entry = panel.find('.h-entry');
+  console.log(entry);
+  panel.fadeOut(function () {
+    entry.insertAfter(panel).fadeIn();
+    panel.remove();
+  });
+});
+
+$('#entries').delegate('button.entry-edit', 'click', function () {
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+});
 
 publishers.checkAuth();
 
@@ -135,6 +167,8 @@ function addToot (publisher, data) {
   var entry = $(hentry(data));
   $('#entries').prepend(entry);
   entry.find('time.timeago').timeago();
+
+  injectEntryUI();
 }
 
 function loadToots (publisher) {
@@ -160,6 +194,7 @@ function loadToots (publisher) {
     // Make the timestamps all fancy!
     $('time.timeago').timeago();
 
+    injectEntryUI();
   });
 
 }
@@ -173,9 +208,9 @@ function saveToots (publisher) {
   }
 
   // Copy entry nodes from source to destination
-  var src = document.querySelector('#entries');
-  for (var i=0; i<src.childNodes.length; i++) {
-    dest.appendChild(src.childNodes[i].cloneNode(true));
+  var srcEntries = document.querySelectorAll('#entries > .h-entry');
+  for (var i=0; i<srcEntries.length; i++) {
+    dest.appendChild(srcEntries[i].cloneNode(true));
   }
 
   // Clean up any .ui-only elements used for editing & etc.
@@ -239,4 +274,17 @@ function profileEdit () {
 function profileEditDone () {
   elAbout.find('.ui-only').remove();
   elAbout.removeClass('editing');
+}
+
+function injectEntryUI () {
+  $('.h-entry').each(function () {
+    var entry = $(this);
+    var header = entry.find('header');
+
+    var uis = header.find('.ui-only');
+    if (uis.length) { return; }
+
+    header.append('<button class="ui-only entry-edit btn btn-success btn-xs">Edit</button>');
+    header.append('<button class="ui-only entry-delete btn btn-danger btn-xs">Delete</button>');
+  });
 }
