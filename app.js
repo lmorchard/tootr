@@ -86,11 +86,26 @@ function setup (msg, publisher) {
     });
   });
 
+
   $('button#profileEdit').click(profileEdit);
 
   $('button#profileEditDone').click(profileEditDone);
 
-  $('#entries').delegate('button.entry-delete', 'click', function () {
+  $('#entries').delegate('.h-entry', 'click', function (ev) {
+    var entry = $(this);
+    var footer = entry.find('footer.ui-only');
+    if (footer.length) {
+      footer.remove();
+      return;
+    }
+    footer = $('<footer class="ui-only">');
+    footer.append('<button class="ui-only entry-edit btn btn-success btn-sm">Edit</button>');
+    footer.append('<button class="ui-only entry-edit-done btn btn-primary btn-sm">Done</button>');
+    footer.append('<button class="ui-only entry-delete btn btn-danger btn-sm">Delete</button>');
+    entry.append(footer);
+  });
+
+  $('#entries').delegate('button.entry-delete', 'click', function (ev) {
     var button = $(this);
     var entry = button.parents('.h-entry');
     entry.fadeOut(function () {
@@ -103,9 +118,10 @@ function setup (msg, publisher) {
       undo.find('.panel-body').append(entry);
       saveToots(publisher);
     });
+    ev.stopPropagation();
   });
 
-  $('#entries').delegate('button.entry-undo-delete', 'click', function () {
+  $('#entries').delegate('button.entry-undo-delete', 'click', function (ev) {
     var button = $(this);
     var panel = button.parents('.panel.undo-delete');
     var entry = panel.find('.h-entry');
@@ -116,9 +132,10 @@ function setup (msg, publisher) {
         saveToots(publisher);
       });
     });
+    ev.stopPropagation();
   });
 
-  $('#entries').delegate('button.entry-edit', 'click', function () {
+  $('#entries').delegate('button.entry-edit', 'click', function (ev) {
     var button = $(this);
     var entry = button.parents('.h-entry');
     var field = $('<textarea class="ui-only form-control"></textarea>');
@@ -128,9 +145,10 @@ function setup (msg, publisher) {
     field.insertAfter(content).val(content.html()).change(function () {
       content.html(field.val());
     });
+    ev.stopPropagation();
   });
 
-  $('#entries').delegate('button.entry-edit-done', 'click', function () {
+  $('#entries').delegate('button.entry-edit-done', 'click', function (ev) {
     var button = $(this);
     var entry = button.parents('.h-entry');
     var field = entry.find('textarea');
@@ -140,6 +158,7 @@ function setup (msg, publisher) {
     content.html(field.val());
     saveToots(publisher);
     field.remove();
+    ev.stopPropagation();
   });
 
   publisher.list('', function (err, resources) {
@@ -190,8 +209,6 @@ function addToot (publisher, data) {
   var entry = $(hentry(data));
   $('#entries').prepend(entry);
   entry.find('time.timeago').timeago();
-
-  injectEntryUI();
 }
 
 function loadToots (publisher) {
@@ -216,8 +233,6 @@ function loadToots (publisher) {
 
     // Make the timestamps all fancy!
     $('time.timeago').timeago();
-
-    injectEntryUI();
   });
 
 }
@@ -297,22 +312,6 @@ function profileEdit () {
 function profileEditDone () {
   elAbout.find('.ui-only').remove();
   elAbout.removeClass('editing');
-}
-
-function injectEntryUI () {
-  $('.h-entry').each(function () {
-    var entry = $(this);
-    var header = entry.find('header');
-
-    var uis = entry.find('.ui-only');
-    if (uis.length) { return; }
-
-    var content = entry.find('.e-content');
-
-    content.after('<button class="ui-only entry-edit btn btn-success btn-sm">Edit</button>');
-    content.after('<button class="ui-only entry-edit-done btn btn-primary btn-sm">Done</button>');
-    content.after('<button class="ui-only entry-delete btn btn-danger btn-sm">Delete</button>');
-  });
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
