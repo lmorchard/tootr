@@ -84,6 +84,9 @@ function setup (msg, publisher) {
     });
   });
 
+  $('button#upgrade').click(function () {
+    upgradeTemplate(publisher)
+  });
 
   $('button#profileEdit').click(profileEdit);
 
@@ -235,7 +238,7 @@ function loadToots (publisher) {
 
 }
 
-function saveToots (publisher) {
+function saveToots (publisher, cb) {
 
   // Clean out the destination
   var dest = docIndex.querySelector('#entries');
@@ -247,6 +250,15 @@ function saveToots (publisher) {
   var srcEntries = document.querySelectorAll('#entries > .h-entry');
   for (var i=0; i<srcEntries.length; i++) {
     dest.appendChild(srcEntries[i].cloneNode(true));
+  }
+
+  var destAbout = docIndex.querySelector('#about');
+  while (destAbout.firstChild) {
+    destAbout.removeChild(destAbout.firstChild);
+  }
+  var srcCards = document.querySelectorAll('#about > .h-card');
+  for (var i=0; i<srcCards.length; i++) {
+    destAbout.appendChild(srcCards[i].cloneNode(true));
   }
 
   // Clean up any .ui-only elements used for editing & etc.
@@ -261,9 +273,89 @@ function saveToots (publisher) {
     if (err) {
       console.log("ERROR SAVING TOOTS " + err);
     } else {
-      console.log("Saved toots");
+      console.log("Saved toots " + content);
       pingTootHub();
     }
+  });
+
+}
+
+function flatten (item) {
+  return _.chain(item).map(function (value, key) {
+    return [key, value[0]];
+  }).object().value();
+}
+
+function upgradeTemplate (publisher) {
+
+  var assets = [
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+    });
+  }, function (err) {
+    if (err) {
+      console.log("Upgrade error: " + err);
+    }
+  });
+
+  $.get('site.html', function (content) {
+
+    docIndex.documentElement.innerHTML = content;
+
+    var entries = docIndex.querySelector('#entries');
+    var template = docIndex.querySelector('#entries > template')
+      .content.querySelector('.h-entry');
+
+    var cards = microformats.getItems({
+      filters: ['h-card'],
+      node: document.querySelector('#about')
+    });
+    var card = flatten(cards.items[0].properties);
+
+    $('.h-card', docIndex)
+      .find('.p-note').html(card.note).end()
+      .find('.p-nickname').html(card.nickname).end()
+      .find('.p-name').html(card.name).end();
+
+    var entries = microformats.getItems({
+      filters: ['h-entry'],
+      node: document.querySelector('#entries')
+    });
+
+    if (entries.items) {
+      entries.items.forEach(function (item) {
+        var props = flatten(item.properties);
+        var entry = $(docIndex.importNode(template, true));
+
+        entry
+          .find('.e-content').html(props.content).end()
+          .find('.dt-published').html(props.published).end()
+          .find('.u-url').attr('href', props.url).end()
+          .find('.h-card')
+            .find('.p-nickname').html(card.nickname).end()
+            .find('.p-name').html(card.name).end()
+          .end();
+
+        $('#entries', docIndex).append(entry);
+      });
+
+    }
+
+    // Serialize the HTML and publish it!
+    var content = docIndex.documentElement.outerHTML;
+    publisher.put('index.html', content, function (err) {
+      if (err) {
+        console.log("ERROR SAVING TOOTS " + err);
+      } else {
+        // pingTootHub();
+        loadToots(publisher);
+      }
+    });
+
   });
 
 }
