@@ -1,15 +1,14 @@
-var $ = require('jquery');
 var PubSub = require('pubsub-js');
-var misc = require('./misc');
-var publishers = require('./publishers/index');
+var misc = require('../misc');
+var publishers = require('../publishers/index');
+var hentry = require('../../templates/hentry');
 var microformats = require('microformat-shiv').microformats;
-window.microformats = microformats;
 var MD5 = require('MD5');
 
-var _ = require('underscore');
-var PubSub = require('pubsub-js');
 var async = require('async');
+var _ = require('underscore');
 var $ = require('jquery');
+
 require('timeago');
 
 var config = _.extend({
@@ -20,27 +19,30 @@ var config = _.extend({
   }
 }[location.hostname]);
 
-var publishers = require('./publishers');
-var hentry = require('../templates/hentry');
+var author = { };
+var publisher = null;
 
-PubSub.subscribe('publishers.setCurrent', setup);
-PubSub.subscribe('publishers.clearCurrent', teardown);
-
-$('#showAdvancedLogin').click(function () {
-  $('section.login').toggleClass('advanced');
-  return false;
-});
+var elAbout = $('section#about');
+var hcard = elAbout.find('dl.h-card');
 
 $('button#logout').click(publishers.logout);
+$('button#profileEdit').click(handleProfileEdit);
+$('button#profileEditDone').click(handleProfileEditDone);
+$('form#toot').submit(handleTootFormSubmit);
+$('#entries')
+  .delegate('.h-entry', 'click', handleHEntryClick)
+  .delegate('button.entry-delete', 'click', handleEntryDelete)
+  .delegate('button.entry-undo-delete', 'click', handleEntryUndoDelete)
+  .delegate('button.entry-edit', 'click', handleEntryEdit)
+  .delegate('button.entry-edit-done', 'click', handleEntryEditDone);
 
+PubSub.subscribe('publishers.setCurrent', handleSignIn);
+PubSub.subscribe('publishers.clearCurrent', handleSignOut);
 publishers.checkAuth();
 
-var author = { };
+function handleSignIn (msg, currentPublisher) {
+  publisher = currentPublisher;
 
-// Hidden document used to produce HTML for publishing
-var docIndex = document.implementation.createHTMLDocument('');
-
-function setup (msg, publisher) {
   $('body').addClass('logged-in').removeClass('logged-out');
 
   var profile = publishers.getProfile();
@@ -59,115 +61,18 @@ function setup (msg, publisher) {
   author.name = profile.name;
   author.url = profile.url;
 
-  $('.h-card')
-    .addClass('ready')
-    .find('.p-name').text(profile.name).end()
-    .find('.u-url').attr('href', profile.url).end()
-    .find('.p-nickname').text(profile.nickname).end();
-
-  $('.session')
-    .find('a.home').attr('href', author.url).end()
-    .find('a.username').text(author.nickname).end()
-    .find('.avatar img').attr('src', author.avatar)
-      .attr('title', author.name).attr('alt', author.name);
-
-  $('form#toot').each(function () {
-    var f = $(this);
-    f.submit(function () {
-      var textarea = f.find('[name=content]');
-      var content = textarea.val().trim();
-      if (!content) { return; }
-      addToot(publisher, { content: content });
-      saveToots(publisher);
-      textarea.val('');
-      return false;
-    });
-  });
-
-  $('button#upgrade').click(function () {
-    upgradeTemplate(publisher)
-  });
-
-  $('button#profileEdit').click(profileEdit);
-
-  $('button#profileEditDone').click(profileEditDone);
-
-  $('#entries').delegate('.h-entry', 'click', function (ev) {
-    var entry = $(this);
-    var footer = entry.find('footer.ui-only');
-    if (footer.length) {
-      footer.remove();
-      return;
-    }
-    footer = $('<footer class="ui-only">');
-    footer.append('<button class="ui-only entry-edit btn btn-success btn-sm">Edit</button>');
-    footer.append('<button class="ui-only entry-edit-done btn btn-primary btn-sm">Done</button>');
-    footer.append('<button class="ui-only entry-delete btn btn-danger btn-sm">Delete</button>');
-    entry.append(footer);
-  });
-
-  $('#entries').delegate('button.entry-delete', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    entry.fadeOut(function () {
-      var undo = $(
-        '<div class="undo-delete panel panel-default"><div class="panel-body">' +
-        'Entry deleted. ' +
-        '<button class="entry-undo-delete btn btn-success btn-sm">Undo?</button>' +
-        '</div></div>');
-      entry.after(undo);
-      undo.find('.panel-body').append(entry);
-      saveToots(publisher);
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-undo-delete', 'click', function (ev) {
-    var button = $(this);
-    var panel = button.parents('.panel.undo-delete');
-    var entry = panel.find('.h-entry');
-    console.log(entry);
-    panel.fadeOut(function () {
-      entry.insertAfter(panel).fadeIn(function () {
-        panel.remove();
-        saveToots(publisher);
-      });
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-edit', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    var field = $('<textarea class="ui-only form-control"></textarea>');
-    var content = entry.find('.e-content');
-
-    entry.addClass('editing');
-    field.insertAfter(content).val(content.html()).change(function () {
-      content.html(field.val());
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-edit-done', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    var field = entry.find('textarea');
-    var content = entry.find('.e-content');
-
-    entry.removeClass('editing');
-    content.html(field.val());
-    saveToots(publisher);
-    field.remove();
-    ev.stopPropagation();
+  $('.session').fillOut({
+    'a.home @href': author.url,
+    'a.username': author.nickname,
+    '.avatar img @src': author.avatar,
+    '.avatar img @title': author.name,
+    '.avatar img @alt': author.name
   });
 
   publisher.list('', function (err, resources) {
     if (err) {
-      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
-      return;
-    }
-    if ('index.html' in resources) {
+      return console.log("LIST ERR " + JSON.stringify(err, null, '  '));
+    } else if ('index.html' in resources) {
       return loadToots(publisher);
     } else {
       return firstRun(publisher);
@@ -175,208 +80,12 @@ function setup (msg, publisher) {
   });
 }
 
-function teardown (msg) {
+function handleSignOut (msg) {
   $('body').removeClass('logged-in').addClass('logged-out');
   $('#entries').empty();
 }
 
-function firstRun (publisher) {
-  console.log("Performing first run");
-  var assets = [
-    {src: 'site.html', dest: 'index.html'},
-    {src: 'site.css', dest: 'site.css'},
-    {src: 'site.js', dest: 'site.js'}
-  ];
-  async.each(assets, function (asset, next) {
-    $.get(asset.src, function (content) {
-      publisher.put(asset.dest, content, next);
-      if (asset.src == 'site.html') {
-        docIndex.documentElement.innerHTML = content;
-      }
-    });
-  }, function (err) {
-    if (err) {
-      console.log("First run error: " + err);
-    }
-  });
-}
-
-function addToot (publisher, data) {
-  data.author = data.author || author;
-  data.published = data.published || (new Date()).toISOString();
-  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
-  data.permalink = '#' + data.id;
-
-  var entry = $(hentry(data));
-  $('#entries').prepend(entry);
-  entry.find('time.timeago').timeago();
-}
-
-function loadToots (publisher) {
-
-  // Fetch the toots from the publisher.
-  publisher.get('index.html', function (err, content) {
-
-    // Load the toot source into hidden source document
-    docIndex.documentElement.innerHTML = content;
-
-    // Clean out the destination.
-    var dest = document.querySelector('#entries');
-    while (dest.firstChild) {
-      dest.removeChild(dest.firstChild);
-    }
-
-    // Copy entry nodes from source to destination.
-    var src = docIndex.querySelector('#entries');
-    for (var i=0; i<src.childNodes.length; i++) {
-      dest.appendChild(src.childNodes[i].cloneNode(true));
-    }
-
-    // Make the timestamps all fancy!
-    $('time.timeago').timeago();
-  });
-
-}
-
-function saveToots (publisher, cb) {
-
-  // Clean out the destination
-  var dest = docIndex.querySelector('#entries');
-  while (dest.firstChild) {
-    dest.removeChild(dest.firstChild);
-  }
-
-  // Copy entry nodes from source to destination
-  var srcEntries = document.querySelectorAll('#entries > .h-entry');
-  for (var i=0; i<srcEntries.length; i++) {
-    dest.appendChild(srcEntries[i].cloneNode(true));
-  }
-
-  var destAbout = docIndex.querySelector('#about');
-  while (destAbout.firstChild) {
-    destAbout.removeChild(destAbout.firstChild);
-  }
-  var srcCards = document.querySelectorAll('#about > .h-card');
-  for (var i=0; i<srcCards.length; i++) {
-    destAbout.appendChild(srcCards[i].cloneNode(true));
-  }
-
-  // Clean up any .ui-only elements used for editing & etc.
-  var ui = docIndex.querySelectorAll('.ui-only');
-  for (var i=0; i<ui.length; i++) {
-    ui[i].parentNode.removeChild(ui[i]);
-  };
-
-  // Serialize the HTML and publish it!
-  var content = docIndex.documentElement.outerHTML;
-  publisher.put('index.html', content, function (err) {
-    if (err) {
-      console.log("ERROR SAVING TOOTS " + err);
-    } else {
-      console.log("Saved toots " + content);
-      pingTootHub();
-    }
-  });
-
-}
-
-function flatten (item) {
-  return _.chain(item).map(function (value, key) {
-    return [key, value[0]];
-  }).object().value();
-}
-
-function upgradeTemplate (publisher) {
-
-  var assets = [
-    {src: 'site.css', dest: 'site.css'},
-    {src: 'site.js', dest: 'site.js'}
-  ];
-  async.each(assets, function (asset, next) {
-    $.get(asset.src, function (content) {
-      publisher.put(asset.dest, content, next);
-    });
-  }, function (err) {
-    if (err) {
-      console.log("Upgrade error: " + err);
-    }
-  });
-
-  $.get('site.html', function (content) {
-
-    docIndex.documentElement.innerHTML = content;
-
-    var entries = docIndex.querySelector('#entries');
-    var template = docIndex.querySelector('#entries > template')
-      .content.querySelector('.h-entry');
-
-    var cards = microformats.getItems({
-      filters: ['h-card'],
-      node: document.querySelector('#about')
-    });
-    var card = flatten(cards.items[0].properties);
-
-    $('.h-card', docIndex)
-      .find('.p-note').html(card.note).end()
-      .find('.p-nickname').html(card.nickname).end()
-      .find('.p-name').html(card.name).end();
-
-    var entries = microformats.getItems({
-      filters: ['h-entry'],
-      node: document.querySelector('#entries')
-    });
-
-    if (entries.items) {
-      entries.items.forEach(function (item) {
-        var props = flatten(item.properties);
-        var entry = $(docIndex.importNode(template, true));
-
-        entry
-          .find('.e-content').html(props.content).end()
-          .find('.dt-published').html(props.published).end()
-          .find('.u-url').attr('href', props.url).end()
-          .find('.h-card')
-            .find('.p-nickname').html(card.nickname).end()
-            .find('.p-name').html(card.name).end()
-          .end();
-
-        $('#entries', docIndex).append(entry);
-      });
-
-    }
-
-    // Serialize the HTML and publish it!
-    var content = docIndex.documentElement.outerHTML;
-    publisher.put('index.html', content, function (err) {
-      if (err) {
-        console.log("ERROR SAVING TOOTS " + err);
-      } else {
-        // pingTootHub();
-        loadToots(publisher);
-      }
-    });
-
-  });
-
-}
-
-function pingTootHub () {
-  $.ajax({
-    type: 'POST',
-    url: config.HUB_PING_URL,
-    json: true,
-    data: { url: author.url }
-  }).then(function (data, status, xhr) {
-    console.log('Ping sent');
-  }).fail(function (xhr, status, err) {
-    console.error(err);
-  });
-}
-
-var elAbout = $('section#about');
-var hcard = elAbout.find('dl.h-card');
-
-function profileEdit () {
+function handleProfileEdit () {
   elAbout.addClass('editing');
 
   hcard.find('dd').each(function () {
@@ -399,7 +108,222 @@ function profileEdit () {
   hcard.find('input, textarea').eq(0).focus();
 }
 
-function profileEditDone () {
+function handleProfileEditDone () {
   elAbout.find('.ui-only').remove();
   elAbout.removeClass('editing');
+}
+
+// React to toot form submission by adding a new toot
+function handleTootFormSubmit (ev) {
+  var textarea = $(this).find('[name=content]');
+  var content = textarea.val().trim();
+  if (!content) { return; }
+  textarea.val('');
+  addToot(publisher, { content: content });
+  saveToots(publisher);
+  return false;
+}
+
+// Toggle per-entry editing UI on click
+function handleHEntryClick (ev) {
+  var entry = $(this);
+
+  if (entry.hasClass('show-ui')) {
+    entry.find('footer.entry-edit-footer').remove();
+  } else {
+    $('.templates .entry-edit-footer').clone().appendTo(entry);
+  }
+  entry.toggleClass('show-ui');
+
+  return false;
+}
+
+// Delete with undo by tucking the entry into panel
+function handleEntryDelete (ev) {
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+
+  entry.fadeOut(function () {
+    $('.templates .entry-undo-delete-panel').clone()
+      .insertAfter(entry).append(entry);
+    saveToots(publisher);
+  });
+
+  return ev.stopPropagation();
+}
+
+// Undo delete by unpacking entry from the panel
+function handleEntryUndoDelete (ev) {
+  var button = $(this);
+  var panel = button.parents('.entry-undo-delete-panel');
+  var entry = panel.find('.h-entry');
+
+  panel.fadeOut(function () {
+    entry.insertAfter(panel).fadeIn(function () {
+      panel.remove();
+      saveToots(publisher);
+    });
+  });
+
+  ev.stopPropagation();
+}
+
+// Set up entry editor and hide the content
+function handleEntryEdit (ev) {
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+  var content = entry.find('.e-content');
+  var field = $('.templates .entry-editor').clone();
+
+  entry.addClass('editing');
+  field.insertAfter(content)
+    .val(content.html())
+    .change(function () {
+      content.html(field.val());
+    });
+
+  ev.stopPropagation();
+}
+
+// Remove the editor and save changes
+function handleEntryEditDone (ev) {
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+  var field = entry.find('textarea');
+  var content = entry.find('.e-content');
+
+  entry.removeClass('editing');
+  content.html(field.val());
+  saveToots(publisher);
+  field.remove();
+
+  ev.stopPropagation();
+}
+
+function firstRun (publisher) {
+  var assets = [
+    {src: 'site.html', dest: 'index.html'},
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+    });
+  }, function (err) {
+    if (err) {
+      console.log("First run error: " + err);
+    }
+  });
+}
+
+function addToot (publisher, data) {
+  data.author = data.author || author;
+  data.published = data.published || (new Date()).toISOString();
+  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
+  data.permalink = '#' + data.id;
+
+  var entry = $(hentry(data));
+  $('#entries').prepend(entry);
+  entry.find('time.timeago').timeago();
+}
+
+function loadToots (publisher) {
+  publisher.get('index.html', function (err, content) {
+    var docIndex = document.implementation.createHTMLDocument('');
+    docIndex.documentElement.innerHTML = content;
+    copyToots(docIndex, document);
+    $('time.dt-published').timeago();
+  });
+}
+
+function saveToots (publisher) {
+  $.get('site.html', function (content) {
+    var docIndex = document.implementation.createHTMLDocument('');
+    docIndex.documentElement.innerHTML = content;
+    copyToots(document, docIndex);
+
+    // Serialize the HTML and publish it!
+    var content = docIndex.documentElement.outerHTML;
+    publisher.put('index.html', content, function (err) {
+      if (err) {
+        console.log("ERROR SAVING TOOTS " + err);
+      } else {
+        pingTootHub();
+      }
+    });
+  });
+
+  var assets = [
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+    });
+  }, function (err) {
+    if (err) {
+      console.log("Upgrade error: " + err);
+    }
+  });
+}
+
+function copyToots (docFrom, docTo) {
+
+  var cards = microformats.getItems({
+    filters: ['h-card'],
+    document: docFrom,
+    node: docFrom.querySelector('#about')
+  });
+  var card = cards.items.length ?
+    misc.flatten(cards.items[0].properties) : {};
+
+  if (!card) { card = publishers.getProfile(); }
+
+  $('.h-card', docTo).fillOut({
+    '.p-name': card.name,
+    '.u-url @href': card.url,
+    '.p-nickname': card.nickname,
+    '.p-note': card.note
+  });
+
+  var entries = microformats.getItems({
+    filters: ['h-entry'],
+    document: docFrom,
+    node: docFrom.querySelector('#entries')
+  });
+
+  $('#entries', docTo).empty();
+
+  var tmpl = $('.templates .h-entry', docTo);
+  if (!tmpl.length) {
+    tmpl = $('.templates .h-entry', docFrom);
+  }
+
+  entries.items.forEach(function (item) {
+    var props = misc.flatten(item.properties);
+    tmpl.clone().fillOut({
+      '.e-content': props.content,
+      '.dt-published': props.published,
+      '.dt-published @datetime': props.published,
+      '.u-url @href': props.url,
+      '.h-card .p-nickname': card.nickname,
+      '.h-card .p-name': card.name
+    }).appendTo($('#entries', docTo));
+  });
+
+}
+
+function pingTootHub () {
+  $.ajax({
+    type: 'POST',
+    url: config.HUB_PING_URL,
+    json: true,
+    data: { url: author.url }
+  }).then(function (data, status, xhr) {
+    console.log('Ping sent');
+  }).fail(function (xhr, status, err) {
+    console.error(err);
+  });
 }

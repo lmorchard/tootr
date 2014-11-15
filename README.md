@@ -7,14 +7,16 @@
 ## TODO
 
 * Profile
-  * Edit fields like bio, etc.
   * Upload image other than gravatar
+
+* Conflict resolution - eg. 2 clients in operation
+  * Grab etag on load
+  * Check etag before save
+  * On etag mismatch, reload & merge entries
+  * Then, save
 
 * Better config
   * Pull config out of modules, put into a shared .json / .js at project root.
-
-* Need a way to "upgrade" the published feed template
-  * eg. for markup-affecting themes, etc
 
 * Dev papercuts
   * Start instance of lmorchard/tootspace-s3 from gulp watch
@@ -26,10 +28,6 @@
   * Need network loading indicators
   * Remember last publisher logged in
     * de-emphasize / hide other choices after first login
-
-* Toots
-  * edit
-  * delete
 
 * Publishers
   * webdav (?)

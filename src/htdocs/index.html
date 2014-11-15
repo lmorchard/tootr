@@ -50,7 +50,6 @@
               <a class="home" href="#" target="_blank"><img src=""></a>
             </li>
             <li>
-              <button id="upgrade" class="btn btn-default navbar-btn">Upgrade</button>
               <button id="logout" class="btn btn-default navbar-btn">Logout</button>
             </li>
           </ul>
@@ -62,11 +61,49 @@
     <div class="container">
 
       <div class="col-md-8">
+
         <form id="toot">
           <textarea name="content"></textarea>
           <button class="btn btn-primary btn-lg" name="commit">toot!</button>
         </form>
+
         <section id="entries"></section>
+
+        <section class="templates">
+
+          <footer class="ui-only entry-edit-footer">
+            <button class="entry-edit btn btn-success btn-sm">Edit</button>
+            <button class="entry-edit-done btn btn-primary btn-sm">Done</button>
+            <button class="entry-delete btn btn-danger btn-sm">Delete</button>
+          </footer>
+
+          <textarea class="entry-editor form-control"></textarea>
+
+          <div class="entry-undo-delete-panel panel panel-default">
+            <div class="panel-body">
+              Entry deleted.
+              <button class="entry-undo-delete btn btn-success btn-sm">Undo?</button>
+            </div>
+          </div>
+
+          <div class="h-entry" id="">
+            <header>
+              <span class="h-card">
+                <a class="u-url" href="">
+                  <img class="u-photo" src="" width="48" height="48">
+                  <span class="p-name"></span>
+                  <span class="p-nickname"></span>
+                </a>
+              </span>
+              <a class="u-url" href="">
+                <time class="dt-published" datetime=""></time>
+              </a>
+            </header>
+            <p class="e-content"></p>
+          </div>
+
+        </section>
+
       </div>
 
       <aside class="col-md-4" id="sidebar">
@@ -79,9 +116,7 @@
             <dt>Name</dt>
               <dd class="p-name text"></dd>
             <dt>Bio</dt>
-              <dd class="p-note textarea">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut quis laoreet felis. Curabitur mattis at augue non efficitur. Aenean egestas consectetur euismod.
-              </dd>
+              <dd class="p-note textarea"></dd>
           </dl>
         </section>
       </aside>
