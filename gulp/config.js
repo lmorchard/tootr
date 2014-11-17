@@ -26,8 +26,8 @@ module.exports = {
     dest: dest
   },
   images: {
-    src: src + "/images/**",
-    dest: dest + "/images"
+    src: src + "/img/**",
+    dest: dest + "/img"
   },
   markup: {
     src: src + "/htdocs/**",
@@ -39,7 +39,7 @@ module.exports = {
     // Enable source maps
     debug: false,
     // Additional file extentions to make optional
-    extensions: ['.coffee', '.hbs'],
+    extensions: ['.coffee'],
     // A separate bundle will be generated for each
     // bundle config in the list below
     bundleConfigs: [

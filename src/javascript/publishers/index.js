@@ -2,6 +2,7 @@ var _ = require('underscore');
 var $ = require('jquery');
 var PubSub = require('pubsub-js');
 var async = require('async');
+var MD5 = require('MD5');
 
 var publishers = module.exports = {};
 
@@ -32,6 +33,18 @@ publishers.getProfile = function () {
   var profile = null;
   try {
     profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
+
+    // HACK: Try to ensure we have an avatar, if we have an email address
+    // TODO: Should this be done per-publisher?
+    if (!profile.avatar) {
+      if (!profile.emailHash && profile.email) {
+        profile.emailHash = MD5.hex_md5(profile.email);
+      }
+      if (profile.emailHash) {
+        profile.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
+      }
+    }
+
   } catch (e) {
     /* No-op */
   }
@@ -75,6 +88,7 @@ var modules = {
   'Dropbox': require('./Dropbox'),
   'Github': require('./Github')
 };
+
 for (var name in modules) {
   publishers[name] = modules[name](publishers, baseModule);
 }
