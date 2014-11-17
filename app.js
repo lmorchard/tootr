@@ -1,17 +1,14 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./src/javascript/app.js":[function(require,module,exports){
 (function (global){
-var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var PubSub = require('pubsub-js');
 var misc = require('./misc');
 var publishers = require('./publishers/index');
 var microformats = require('microformat-shiv').microformats;
-window.microformats = microformats;
-var MD5 = require('MD5');
 
-var _ = require('underscore');
-var PubSub = require('pubsub-js');
 var async = require('async');
+var _ = require('underscore');
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+
 require('timeago');
 
 var config = _.extend({
@@ -22,151 +19,45 @@ var config = _.extend({
   }
 }[location.hostname]);
 
-var publishers = require('./publishers');
-var hentry = require('../templates/hentry');
-
-PubSub.subscribe('publishers.setCurrent', setup);
-PubSub.subscribe('publishers.clearCurrent', teardown);
-
-$('#showAdvancedLogin').click(function () {
-  $('section.login').toggleClass('advanced');
-  return false;
-});
+var elAbout = $('section#about');
+var hcard = elAbout.find('dl.h-card');
 
 $('button#logout').click(publishers.logout);
+$('button#profileEdit').click(handleProfileEdit);
+$('button#profileEditDone').click(handleProfileEditDone);
+$('form#toot').submit(handleTootFormSubmit);
+$('#entries')
+  .delegate('.h-entry', 'click', handleEntryClick)
+  .delegate('button.entry-delete', 'click', handleEntryDelete)
+  .delegate('button.entry-undo-delete', 'click', handleEntryUndoDelete)
+  .delegate('button.entry-edit', 'click', handleEntryEdit)
+  .delegate('button.entry-edit-done', 'click', handleEntryEditDone);
+
+PubSub.subscribe('publishers.setCurrent', handleSignIn);
+PubSub.subscribe('publishers.clearCurrent', handleSignOut);
 
 publishers.checkAuth();
 
-var author = { };
+var publisher = null;
+var profile = null;
 
-// Hidden document used to produce HTML for publishing
-var docIndex = document.implementation.createHTMLDocument('');
+function handleSignIn (msg, currentPublisher) {
+  publisher = currentPublisher;
+  profile = publishers.getProfile();
 
-function setup (msg, publisher) {
   $('body').addClass('logged-in').removeClass('logged-out');
-
-  var profile = publishers.getProfile();
-
-  if (profile.avatar) {
-    author.avatar = profile.avatar;
-  } else if (profile.emailHash) {
-    author.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
-  } else if (profile.email) {
-    var hash = MD5.hex_md5(profile.email);
-    author.avatar = 'https://www.gravatar.com/avatar/' + hash;
-  }
-
-  author.email = profile.email;
-  author.nickname = profile.nickname;
-  author.name = profile.name;
-  author.url = profile.url;
-
-  $('.h-card')
-    .addClass('ready')
-    .find('.p-name').text(profile.name).end()
-    .find('.u-url').attr('href', profile.url).end()
-    .find('.p-nickname').text(profile.nickname).end();
-
-  $('.session')
-    .find('a.home').attr('href', author.url).end()
-    .find('a.username').text(author.nickname).end()
-    .find('.avatar img').attr('src', author.avatar)
-      .attr('title', author.name).attr('alt', author.name);
-
-  $('form#toot').each(function () {
-    var f = $(this);
-    f.submit(function () {
-      var textarea = f.find('[name=content]');
-      var content = textarea.val().trim();
-      if (!content) { return; }
-      addToot(publisher, { content: content });
-      saveToots(publisher);
-      textarea.val('');
-      return false;
-    });
-  });
-
-
-  $('button#profileEdit').click(profileEdit);
-
-  $('button#profileEditDone').click(profileEditDone);
-
-  $('#entries').delegate('.h-entry', 'click', function (ev) {
-    var entry = $(this);
-    var footer = entry.find('footer.ui-only');
-    if (footer.length) {
-      footer.remove();
-      return;
-    }
-    footer = $('<footer class="ui-only">');
-    footer.append('<button class="ui-only entry-edit btn btn-success btn-sm">Edit</button>');
-    footer.append('<button class="ui-only entry-edit-done btn btn-primary btn-sm">Done</button>');
-    footer.append('<button class="ui-only entry-delete btn btn-danger btn-sm">Delete</button>');
-    entry.append(footer);
-  });
-
-  $('#entries').delegate('button.entry-delete', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    entry.fadeOut(function () {
-      var undo = $(
-        '<div class="undo-delete panel panel-default"><div class="panel-body">' +
-        'Entry deleted. ' +
-        '<button class="entry-undo-delete btn btn-success btn-sm">Undo?</button>' +
-        '</div></div>');
-      entry.after(undo);
-      undo.find('.panel-body').append(entry);
-      saveToots(publisher);
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-undo-delete', 'click', function (ev) {
-    var button = $(this);
-    var panel = button.parents('.panel.undo-delete');
-    var entry = panel.find('.h-entry');
-    console.log(entry);
-    panel.fadeOut(function () {
-      entry.insertAfter(panel).fadeIn(function () {
-        panel.remove();
-        saveToots(publisher);
-      });
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-edit', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    var field = $('<textarea class="ui-only form-control"></textarea>');
-    var content = entry.find('.e-content');
-
-    entry.addClass('editing');
-    field.insertAfter(content).val(content.html()).change(function () {
-      content.html(field.val());
-    });
-    ev.stopPropagation();
-  });
-
-  $('#entries').delegate('button.entry-edit-done', 'click', function (ev) {
-    var button = $(this);
-    var entry = button.parents('.h-entry');
-    var field = entry.find('textarea');
-    var content = entry.find('.e-content');
-
-    entry.removeClass('editing');
-    content.html(field.val());
-    saveToots(publisher);
-    field.remove();
-    ev.stopPropagation();
+  $('.session').fillOut({
+    'a.home @href': profile.url,
+    'a.username': profile.nickname,
+    '.avatar img @src': profile.avatar,
+    '.avatar img @title': profile.name,
+    '.avatar img @alt': profile.name
   });
 
   publisher.list('', function (err, resources) {
     if (err) {
-      console.log("LIST ERR " + JSON.stringify(err, null, '  '));
-      return;
-    }
-    if ('index.html' in resources) {
+      return console.log("LIST ERR " + JSON.stringify(err, null, '  '));
+    } else if ('index.html' in resources) {
       return loadToots(publisher);
     } else {
       return firstRun(publisher);
@@ -174,119 +65,12 @@ function setup (msg, publisher) {
   });
 }
 
-function teardown (msg) {
+function handleSignOut (msg) {
   $('body').removeClass('logged-in').addClass('logged-out');
   $('#entries').empty();
 }
 
-function firstRun (publisher) {
-  console.log("Performing first run");
-  var assets = [
-    {src: 'site.html', dest: 'index.html'},
-    {src: 'site.css', dest: 'site.css'},
-    {src: 'site.js', dest: 'site.js'}
-  ];
-  async.each(assets, function (asset, next) {
-    $.get(asset.src, function (content) {
-      publisher.put(asset.dest, content, next);
-      if (asset.src == 'site.html') {
-        docIndex.documentElement.innerHTML = content;
-      }
-    });
-  }, function (err) {
-    if (err) {
-      console.log("First run error: " + err);
-    }
-  });
-}
-
-function addToot (publisher, data) {
-  data.author = data.author || author;
-  data.published = data.published || (new Date()).toISOString();
-  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
-  data.permalink = '#' + data.id;
-
-  var entry = $(hentry(data));
-  $('#entries').prepend(entry);
-  entry.find('time.timeago').timeago();
-}
-
-function loadToots (publisher) {
-
-  // Fetch the toots from the publisher.
-  publisher.get('index.html', function (err, content) {
-
-    // Load the toot source into hidden source document
-    docIndex.documentElement.innerHTML = content;
-
-    // Clean out the destination.
-    var dest = document.querySelector('#entries');
-    while (dest.firstChild) {
-      dest.removeChild(dest.firstChild);
-    }
-
-    // Copy entry nodes from source to destination.
-    var src = docIndex.querySelector('#entries');
-    for (var i=0; i<src.childNodes.length; i++) {
-      dest.appendChild(src.childNodes[i].cloneNode(true));
-    }
-
-    // Make the timestamps all fancy!
-    $('time.timeago').timeago();
-  });
-
-}
-
-function saveToots (publisher) {
-
-  // Clean out the destination
-  var dest = docIndex.querySelector('#entries');
-  while (dest.firstChild) {
-    dest.removeChild(dest.firstChild);
-  }
-
-  // Copy entry nodes from source to destination
-  var srcEntries = document.querySelectorAll('#entries > .h-entry');
-  for (var i=0; i<srcEntries.length; i++) {
-    dest.appendChild(srcEntries[i].cloneNode(true));
-  }
-
-  // Clean up any .ui-only elements used for editing & etc.
-  var ui = docIndex.querySelectorAll('.ui-only');
-  for (var i=0; i<ui.length; i++) {
-    ui[i].parentNode.removeChild(ui[i]);
-  };
-
-  // Serialize the HTML and publish it!
-  var content = docIndex.documentElement.outerHTML;
-  publisher.put('index.html', content, function (err) {
-    if (err) {
-      console.log("ERROR SAVING TOOTS " + err);
-    } else {
-      console.log("Saved toots");
-      pingTootHub();
-    }
-  });
-
-}
-
-function pingTootHub () {
-  $.ajax({
-    type: 'POST',
-    url: config.HUB_PING_URL,
-    json: true,
-    data: { url: author.url }
-  }).then(function (data, status, xhr) {
-    console.log('Ping sent');
-  }).fail(function (xhr, status, err) {
-    console.error(err);
-  });
-}
-
-var elAbout = $('section#about');
-var hcard = elAbout.find('dl.h-card');
-
-function profileEdit () {
+function handleProfileEdit (ev) {
   elAbout.addClass('editing');
 
   hcard.find('dd').each(function () {
@@ -309,13 +93,242 @@ function profileEdit () {
   hcard.find('input, textarea').eq(0).focus();
 }
 
-function profileEditDone () {
+function handleProfileEditDone (ev) {
   elAbout.find('.ui-only').remove();
   elAbout.removeClass('editing');
 }
 
+function handleTootFormSubmit (ev) {
+  // React to toot form submission by adding a new toot
+  var textarea = $(this).find('[name=content]');
+  var content = textarea.val().trim();
+  if (!content) { return; }
+  textarea.val('');
+  addToot(publisher, { content: content });
+  saveToots(publisher);
+  return false;
+}
+
+function handleEntryClick (ev) {
+  // Toggle per-entry editing UI on click
+  var entry = $(this);
+
+  if (entry.hasClass('show-ui')) {
+    entry.find('footer.entry-edit-footer').remove();
+  } else {
+    $('.templates .entry-edit-footer').clone().appendTo(entry);
+  }
+  entry.toggleClass('show-ui');
+
+  return false;
+}
+
+function handleEntryDelete (ev) {
+  // Delete with undo by tucking the entry into panel
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+
+  entry.fadeOut(function () {
+    entry.removeClass('h-entry').addClass('deleted-h-entry');
+    $('.templates .entry-undo-delete-panel').clone()
+      .insertAfter(entry).append(entry);
+    saveToots(publisher);
+  });
+
+  return ev.stopPropagation();
+}
+
+function handleEntryUndoDelete (ev) {
+  // Undo delete by unpacking entry from the panel
+  var button = $(this);
+  var panel = button.parents('.entry-undo-delete-panel');
+  var entry = panel.find('.deleted-h-entry');
+
+  panel.fadeOut(function () {
+    entry.insertAfter(panel).fadeIn(function () {
+      panel.remove();
+      saveToots(publisher);
+    }).addClass('h-entry').removeClass('deleted-h-entry');
+  });
+
+  ev.stopPropagation();
+}
+
+function handleEntryEdit (ev) {
+  // Set up entry editor and hide the content
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+  var content = entry.find('.e-content');
+  var field = $('.templates .entry-editor').clone();
+
+  entry.addClass('editing');
+  field.insertAfter(content)
+    .val(content.html())
+    .change(function () {
+      content.html(field.val());
+    });
+
+  ev.stopPropagation();
+}
+
+function handleEntryEditDone (ev) {
+  // Remove the editor and save changes
+  var button = $(this);
+  var entry = button.parents('.h-entry');
+  var field = entry.find('textarea');
+  var content = entry.find('.e-content');
+
+  entry.removeClass('editing');
+  content.html(field.val());
+  saveToots(publisher);
+  field.remove();
+
+  ev.stopPropagation();
+}
+
+function firstRun (publisher) {
+  var assets = [
+    {src: 'site.html', dest: 'index.html'},
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+    });
+  }, function (err) {
+    if (err) {
+      console.log("First run error: " + err);
+    }
+  });
+}
+
+function addToot (publisher, data) {
+  data.profile = data.profile || profile;
+  data.published = data.published || (new Date()).toISOString();
+  data.id = 'toot-' + Date.now() + '-' + _.random(0, 100);
+  data.permalink = '#' + data.id;
+
+  $('.templates .h-entry').clone().fillOut({
+    '@id': data.id,
+    '.e-content': data.content,
+    '.dt-published': data.published,
+    '.dt-published @datetime': data.published,
+    '.u-url @href': data.permalink,
+    '.h-card .u-photo @src': data.profile.avatar,
+    '.h-card .u-url @href': data.profile.url,
+    '.h-card .p-nickname': data.profile.nickname,
+    '.h-card .p-name': data.profile.name
+  }).prependTo('#entries').find('time').timeago();
+}
+
+function loadToots (publisher) {
+  publisher.get('index.html', function (err, content) {
+    // TODO: Retain etag here to detect changes since we loaded
+    var docIndex = document.implementation.createHTMLDocument('');
+    docIndex.documentElement.innerHTML = content;
+    copyToots(docIndex, document);
+    $('time').timeago();
+  });
+}
+
+function saveToots (publisher) {
+  $.get('site.html', function (content) {
+    var docIndex = document.implementation.createHTMLDocument('');
+    docIndex.documentElement.innerHTML = content;
+    copyToots(document, docIndex);
+    var content = docIndex.documentElement.outerHTML;
+    // TODO: Check etag here to detect changes since we loaded
+    publisher.put('index.html', content, function (err) {
+      if (err) {
+        console.log("ERROR SAVING TOOTS " + err);
+      } else {
+        pingTootHub();
+      }
+    });
+  });
+
+  // TODO: Find a better way to ensure JS/CSS stays updated after first run
+  var assets = [
+    {src: 'site.css', dest: 'site.css'},
+    {src: 'site.js', dest: 'site.js'}
+  ];
+  async.each(assets, function (asset, next) {
+    $.get(asset.src, function (content) {
+      publisher.put(asset.dest, content, next);
+    });
+  }, function (err) {
+    if (err) {
+      console.log("Upgrade error: " + err);
+    }
+  });
+}
+
+function copyToots (docFrom, docTo) {
+
+  var card = _.extend({}, profile);
+
+  var cards = microformats.getItems({
+    filters: ['h-card'],
+    document: docFrom,
+    node: docFrom.querySelector('#about')
+  });
+  if (cards.items.length && cards.items[0].properties) {
+    _.extend(card, misc.flatten(cards.items[0].properties));
+  }
+
+  $('.h-card', docTo).fillOut({
+    '.u-url @href': card.url,
+    '.u-photo @src': card.avatar,
+    '.p-nickname': card.nickname,
+    '.p-name': card.name,
+    '.p-note': card.note
+  });
+
+  var entries = microformats.getItems({
+    filters: ['h-entry'],
+    document: docFrom,
+    node: docFrom.querySelector('#entries')
+  });
+
+  $('#entries', docTo).empty();
+
+  var tmpl = $('.templates .h-entry', docTo);
+  if (!tmpl.length) {
+    tmpl = $('.templates .h-entry', docFrom);
+  }
+
+  entries.items.forEach(function (item) {
+    var props = misc.flatten(item.properties);
+    tmpl.clone().fillOut({
+      '.e-content': props.content,
+      '.dt-published': props.published,
+      '.dt-published @datetime': props.published,
+      '.u-url @href': props.url,
+      '.h-card .p-nickname': card.nickname,
+      '.h-card .p-name': card.name,
+      '.h-card .u-photo @src': card.avatar,
+      '.h-card .u-url @href': card.url
+    }).appendTo($('#entries', docTo));
+  });
+
+}
+
+function pingTootHub () {
+  $.ajax({
+    type: 'POST',
+    url: config.HUB_PING_URL,
+    json: true,
+    data: { url: profile.url }
+  }).then(function (data, status, xhr) {
+    console.log('Ping sent');
+  }).fail(function (xhr, status, err) {
+    console.error(err);
+  });
+}
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../templates/hentry":"/home/lmorchard/devel/tootr/src/templates/hentry.hbs","./misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","./publishers":"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js","./publishers/index":"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js","MD5":"/home/lmorchard/devel/tootr/src/javascript/vendor/md5.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","microformat-shiv":"/home/lmorchard/devel/tootr/node_modules/microformat-shiv/microformat-shiv.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
+},{"./misc":"/home/lmorchard/devel/tootr/src/javascript/misc.js","./publishers/index":"/home/lmorchard/devel/tootr/src/javascript/publishers/index.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","microformat-shiv":"/home/lmorchard/devel/tootr/node_modules/microformat-shiv/microformat-shiv.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","timeago":"/home/lmorchard/devel/tootr/src/javascript/vendor/jquery.timeago.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js":[function(require,module,exports){
 (function (process){
 /*!
  * async
@@ -1507,485 +1520,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js":[function(require,module,exports){
-"use strict";
-/*globals Handlebars: true */
-var base = require("./handlebars/base");
-
-// Each of these augment the Handlebars object. No need to setup here.
-// (This is done to easily share code between commonjs and browse envs)
-var SafeString = require("./handlebars/safe-string")["default"];
-var Exception = require("./handlebars/exception")["default"];
-var Utils = require("./handlebars/utils");
-var runtime = require("./handlebars/runtime");
-
-// For compatibility and usage outside of module systems, make the Handlebars object a namespace
-var create = function() {
-  var hb = new base.HandlebarsEnvironment();
-
-  Utils.extend(hb, base);
-  hb.SafeString = SafeString;
-  hb.Exception = Exception;
-  hb.Utils = Utils;
-
-  hb.VM = runtime;
-  hb.template = function(spec) {
-    return runtime.template(spec, hb);
-  };
-
-  return hb;
-};
-
-var Handlebars = create();
-Handlebars.create = create;
-
-exports["default"] = Handlebars;
-},{"./handlebars/base":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./handlebars/exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./handlebars/runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js","./handlebars/safe-string":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js","./handlebars/utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js":[function(require,module,exports){
-"use strict";
-var Utils = require("./utils");
-var Exception = require("./exception")["default"];
-
-var VERSION = "1.3.0";
-exports.VERSION = VERSION;var COMPILER_REVISION = 4;
-exports.COMPILER_REVISION = COMPILER_REVISION;
-var REVISION_CHANGES = {
-  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
-  2: '== 1.0.0-rc.3',
-  3: '== 1.0.0-rc.4',
-  4: '>= 1.0.0'
-};
-exports.REVISION_CHANGES = REVISION_CHANGES;
-var isArray = Utils.isArray,
-    isFunction = Utils.isFunction,
-    toString = Utils.toString,
-    objectType = '[object Object]';
-
-function HandlebarsEnvironment(helpers, partials) {
-  this.helpers = helpers || {};
-  this.partials = partials || {};
-
-  registerDefaultHelpers(this);
-}
-
-exports.HandlebarsEnvironment = HandlebarsEnvironment;HandlebarsEnvironment.prototype = {
-  constructor: HandlebarsEnvironment,
-
-  logger: logger,
-  log: log,
-
-  registerHelper: function(name, fn, inverse) {
-    if (toString.call(name) === objectType) {
-      if (inverse || fn) { throw new Exception('Arg not supported with multiple helpers'); }
-      Utils.extend(this.helpers, name);
-    } else {
-      if (inverse) { fn.not = inverse; }
-      this.helpers[name] = fn;
-    }
-  },
-
-  registerPartial: function(name, str) {
-    if (toString.call(name) === objectType) {
-      Utils.extend(this.partials,  name);
-    } else {
-      this.partials[name] = str;
-    }
-  }
-};
-
-function registerDefaultHelpers(instance) {
-  instance.registerHelper('helperMissing', function(arg) {
-    if(arguments.length === 2) {
-      return undefined;
-    } else {
-      throw new Exception("Missing helper: '" + arg + "'");
-    }
-  });
-
-  instance.registerHelper('blockHelperMissing', function(context, options) {
-    var inverse = options.inverse || function() {}, fn = options.fn;
-
-    if (isFunction(context)) { context = context.call(this); }
-
-    if(context === true) {
-      return fn(this);
-    } else if(context === false || context == null) {
-      return inverse(this);
-    } else if (isArray(context)) {
-      if(context.length > 0) {
-        return instance.helpers.each(context, options);
-      } else {
-        return inverse(this);
-      }
-    } else {
-      return fn(context);
-    }
-  });
-
-  instance.registerHelper('each', function(context, options) {
-    var fn = options.fn, inverse = options.inverse;
-    var i = 0, ret = "", data;
-
-    if (isFunction(context)) { context = context.call(this); }
-
-    if (options.data) {
-      data = createFrame(options.data);
-    }
-
-    if(context && typeof context === 'object') {
-      if (isArray(context)) {
-        for(var j = context.length; i<j; i++) {
-          if (data) {
-            data.index = i;
-            data.first = (i === 0);
-            data.last  = (i === (context.length-1));
-          }
-          ret = ret + fn(context[i], { data: data });
-        }
-      } else {
-        for(var key in context) {
-          if(context.hasOwnProperty(key)) {
-            if(data) { 
-              data.key = key; 
-              data.index = i;
-              data.first = (i === 0);
-            }
-            ret = ret + fn(context[key], {data: data});
-            i++;
-          }
-        }
-      }
-    }
-
-    if(i === 0){
-      ret = inverse(this);
-    }
-
-    return ret;
-  });
-
-  instance.registerHelper('if', function(conditional, options) {
-    if (isFunction(conditional)) { conditional = conditional.call(this); }
-
-    // Default behavior is to render the positive path if the value is truthy and not empty.
-    // The `includeZero` option may be set to treat the condtional as purely not empty based on the
-    // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.
-    if ((!options.hash.includeZero && !conditional) || Utils.isEmpty(conditional)) {
-      return options.inverse(this);
-    } else {
-      return options.fn(this);
-    }
-  });
-
-  instance.registerHelper('unless', function(conditional, options) {
-    return instance.helpers['if'].call(this, conditional, {fn: options.inverse, inverse: options.fn, hash: options.hash});
-  });
-
-  instance.registerHelper('with', function(context, options) {
-    if (isFunction(context)) { context = context.call(this); }
-
-    if (!Utils.isEmpty(context)) return options.fn(context);
-  });
-
-  instance.registerHelper('log', function(context, options) {
-    var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
-    instance.log(level, context);
-  });
-}
-
-var logger = {
-  methodMap: { 0: 'debug', 1: 'info', 2: 'warn', 3: 'error' },
-
-  // State enum
-  DEBUG: 0,
-  INFO: 1,
-  WARN: 2,
-  ERROR: 3,
-  level: 3,
-
-  // can be overridden in the host environment
-  log: function(level, obj) {
-    if (logger.level <= level) {
-      var method = logger.methodMap[level];
-      if (typeof console !== 'undefined' && console[method]) {
-        console[method].call(console, obj);
-      }
-    }
-  }
-};
-exports.logger = logger;
-function log(level, obj) { logger.log(level, obj); }
-
-exports.log = log;var createFrame = function(object) {
-  var obj = {};
-  Utils.extend(obj, object);
-  return obj;
-};
-exports.createFrame = createFrame;
-},{"./exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js":[function(require,module,exports){
-"use strict";
-
-var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
-
-function Exception(message, node) {
-  var line;
-  if (node && node.firstLine) {
-    line = node.firstLine;
-
-    message += ' - ' + line + ':' + node.firstColumn;
-  }
-
-  var tmp = Error.prototype.constructor.call(this, message);
-
-  // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
-  for (var idx = 0; idx < errorProps.length; idx++) {
-    this[errorProps[idx]] = tmp[errorProps[idx]];
-  }
-
-  if (line) {
-    this.lineNumber = line;
-    this.column = node.firstColumn;
-  }
-}
-
-Exception.prototype = new Error();
-
-exports["default"] = Exception;
-},{}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/runtime.js":[function(require,module,exports){
-"use strict";
-var Utils = require("./utils");
-var Exception = require("./exception")["default"];
-var COMPILER_REVISION = require("./base").COMPILER_REVISION;
-var REVISION_CHANGES = require("./base").REVISION_CHANGES;
-
-function checkRevision(compilerInfo) {
-  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
-      currentRevision = COMPILER_REVISION;
-
-  if (compilerRevision !== currentRevision) {
-    if (compilerRevision < currentRevision) {
-      var runtimeVersions = REVISION_CHANGES[currentRevision],
-          compilerVersions = REVISION_CHANGES[compilerRevision];
-      throw new Exception("Template was precompiled with an older version of Handlebars than the current runtime. "+
-            "Please update your precompiler to a newer version ("+runtimeVersions+") or downgrade your runtime to an older version ("+compilerVersions+").");
-    } else {
-      // Use the embedded version info since the runtime doesn't know about this revision yet
-      throw new Exception("Template was precompiled with a newer version of Handlebars than the current runtime. "+
-            "Please update your runtime to a newer version ("+compilerInfo[1]+").");
-    }
-  }
-}
-
-exports.checkRevision = checkRevision;// TODO: Remove this line and break up compilePartial
-
-function template(templateSpec, env) {
-  if (!env) {
-    throw new Exception("No environment passed to template");
-  }
-
-  // Note: Using env.VM references rather than local var references throughout this section to allow
-  // for external users to override these as psuedo-supported APIs.
-  var invokePartialWrapper = function(partial, name, context, helpers, partials, data) {
-    var result = env.VM.invokePartial.apply(this, arguments);
-    if (result != null) { return result; }
-
-    if (env.compile) {
-      var options = { helpers: helpers, partials: partials, data: data };
-      partials[name] = env.compile(partial, { data: data !== undefined }, env);
-      return partials[name](context, options);
-    } else {
-      throw new Exception("The partial " + name + " could not be compiled when running in runtime-only mode");
-    }
-  };
-
-  // Just add water
-  var container = {
-    escapeExpression: Utils.escapeExpression,
-    invokePartial: invokePartialWrapper,
-    programs: [],
-    program: function(i, fn, data) {
-      var programWrapper = this.programs[i];
-      if(data) {
-        programWrapper = program(i, fn, data);
-      } else if (!programWrapper) {
-        programWrapper = this.programs[i] = program(i, fn);
-      }
-      return programWrapper;
-    },
-    merge: function(param, common) {
-      var ret = param || common;
-
-      if (param && common && (param !== common)) {
-        ret = {};
-        Utils.extend(ret, common);
-        Utils.extend(ret, param);
-      }
-      return ret;
-    },
-    programWithDepth: env.VM.programWithDepth,
-    noop: env.VM.noop,
-    compilerInfo: null
-  };
-
-  return function(context, options) {
-    options = options || {};
-    var namespace = options.partial ? options : env,
-        helpers,
-        partials;
-
-    if (!options.partial) {
-      helpers = options.helpers;
-      partials = options.partials;
-    }
-    var result = templateSpec.call(
-          container,
-          namespace, context,
-          helpers,
-          partials,
-          options.data);
-
-    if (!options.partial) {
-      env.VM.checkRevision(container.compilerInfo);
-    }
-
-    return result;
-  };
-}
-
-exports.template = template;function programWithDepth(i, fn, data /*, $depth */) {
-  var args = Array.prototype.slice.call(arguments, 3);
-
-  var prog = function(context, options) {
-    options = options || {};
-
-    return fn.apply(this, [context, options.data || data].concat(args));
-  };
-  prog.program = i;
-  prog.depth = args.length;
-  return prog;
-}
-
-exports.programWithDepth = programWithDepth;function program(i, fn, data) {
-  var prog = function(context, options) {
-    options = options || {};
-
-    return fn(context, options.data || data);
-  };
-  prog.program = i;
-  prog.depth = 0;
-  return prog;
-}
-
-exports.program = program;function invokePartial(partial, name, context, helpers, partials, data) {
-  var options = { partial: true, helpers: helpers, partials: partials, data: data };
-
-  if(partial === undefined) {
-    throw new Exception("The partial " + name + " could not be found");
-  } else if(partial instanceof Function) {
-    return partial(context, options);
-  }
-}
-
-exports.invokePartial = invokePartial;function noop() { return ""; }
-
-exports.noop = noop;
-},{"./base":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/base.js","./exception":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/exception.js","./utils":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js":[function(require,module,exports){
-"use strict";
-// Build out our basic SafeString type
-function SafeString(string) {
-  this.string = string;
-}
-
-SafeString.prototype.toString = function() {
-  return "" + this.string;
-};
-
-exports["default"] = SafeString;
-},{}],"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/utils.js":[function(require,module,exports){
-"use strict";
-/*jshint -W004 */
-var SafeString = require("./safe-string")["default"];
-
-var escape = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#x27;",
-  "`": "&#x60;"
-};
-
-var badChars = /[&<>"'`]/g;
-var possible = /[&<>"'`]/;
-
-function escapeChar(chr) {
-  return escape[chr] || "&amp;";
-}
-
-function extend(obj, value) {
-  for(var key in value) {
-    if(Object.prototype.hasOwnProperty.call(value, key)) {
-      obj[key] = value[key];
-    }
-  }
-}
-
-exports.extend = extend;var toString = Object.prototype.toString;
-exports.toString = toString;
-// Sourced from lodash
-// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
-var isFunction = function(value) {
-  return typeof value === 'function';
-};
-// fallback for older versions of Chrome and Safari
-if (isFunction(/x/)) {
-  isFunction = function(value) {
-    return typeof value === 'function' && toString.call(value) === '[object Function]';
-  };
-}
-var isFunction;
-exports.isFunction = isFunction;
-var isArray = Array.isArray || function(value) {
-  return (value && typeof value === 'object') ? toString.call(value) === '[object Array]' : false;
-};
-exports.isArray = isArray;
-
-function escapeExpression(string) {
-  // don't escape SafeStrings, since they're already safe
-  if (string instanceof SafeString) {
-    return string.toString();
-  } else if (!string && string !== 0) {
-    return "";
-  }
-
-  // Force a string conversion as this will be done by the append regardless and
-  // the regex test will do this transparently behind the scenes, causing issues if
-  // an object's to string has escaped characters in it.
-  string = "" + string;
-
-  if(!possible.test(string)) { return string; }
-  return string.replace(badChars, escapeChar);
-}
-
-exports.escapeExpression = escapeExpression;function isEmpty(value) {
-  if (!value && value !== 0) {
-    return true;
-  } else if (isArray(value) && value.length === 0) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-exports.isEmpty = isEmpty;
-},{"./safe-string":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars/safe-string.js"}],"/home/lmorchard/devel/tootr/node_modules/handlebars/runtime.js":[function(require,module,exports){
-// Create a simple path alias to allow browserify to resolve
-// the runtime on a supported path.
-module.exports = require('./dist/cjs/handlebars.runtime');
-
-},{"./dist/cjs/handlebars.runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/dist/cjs/handlebars.runtime.js"}],"/home/lmorchard/devel/tootr/node_modules/hbsfy/runtime.js":[function(require,module,exports){
-module.exports = require("handlebars/runtime")["default"];
-
-},{"handlebars/runtime":"/home/lmorchard/devel/tootr/node_modules/handlebars/runtime.js"}],"/home/lmorchard/devel/tootr/node_modules/microformat-shiv/microformat-shiv.js":[function(require,module,exports){
+},{}],"/home/lmorchard/devel/tootr/node_modules/microformat-shiv/microformat-shiv.js":[function(require,module,exports){
 /*!
 	Parser
 	Copyright (C) 2012 Glenn Jones. All Rights Reserved.
@@ -6458,6 +5993,10 @@ https://github.com/mroderick/PubSubJS
 }.call(this));
 
 },{}],"/home/lmorchard/devel/tootr/src/javascript/misc.js":[function(require,module,exports){
+(function (global){
+var _ = require('underscore');
+var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
+
 module.exports.getQueryParameters = function (str) {
   return (str || document.location.search)
     .replace(/(^\?)/,'').split("&")
@@ -6466,7 +6005,13 @@ module.exports.getQueryParameters = function (str) {
         this[n[0]] = decodeURIComponent(n[1]),
         this
     }.bind({}))[0];
-}
+};
+
+module.exports.flatten = function (item) {
+  return _.chain(item).map(function (value, key) {
+    return [key, value[0]];
+  }).object().value();
+};
 
 // Turn a simple structure of nested XML elements into a JavaScript object.
 //
@@ -6507,9 +6052,64 @@ module.exports.xmlToObj = function (parent, force_lists, path) {
 
   // If any subnodes were found, return a struct - else return cdata.
   return (is_struct) ? obj : cdata;
-}
+};
 
-},{}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js":[function(require,module,exports){
+/**
+ * jQuery cloneTemplate plugin, v0.0
+ * lorchard@mozilla.com
+ *
+ * Clone template elements and populate them from a data object.
+ *
+ * The data object keys of which are assumed to be CSS selectors.  Each
+ * selector may end with an @-prefixed name to identify an attribute.
+ *
+ * An element or attribute matched by the selector will have its
+ * content replaced by the value of the data object for the selector.
+ */
+jQuery.fn.extend( {
+
+  fillOut: function (data) {
+    return this.each(function () {
+      var tmpl = $(this);
+      for (key in data) {
+        if (!data.hasOwnProperty(key)) { continue; }
+
+        // Skip populating values that are false or undefined
+        var value = data[key];
+        if (false === value || 'undefined' == typeof value) { continue; }
+
+        // If the key ends with an @attr name, strip it.
+        var at_pos = -1;
+        var attr_name = false;
+        if (-1 !== (at_pos = key.indexOf('@'))) {
+          attr_name = key.substring(at_pos + 1);
+          key = key.substring(0, at_pos);
+        }
+
+        // Attempt to find the placeholder by selector
+        var el = (key) ? tmpl.find(key) : tmpl;
+        if (!el.length) { continue; }
+
+        if (attr_name) {
+          // Set the attribute, if we had an attribute name.
+          el.attr(attr_name, value);
+        } else {
+          if ('string' === typeof value) {
+            // Strings work as HTML replacements.
+            el.html(value);
+          } else if ('undefined' != typeof value.nodeType) {
+            // Elements become content replacements.
+            el.empty().append(value);
+          }
+        }
+      }
+    });
+  }
+
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js":[function(require,module,exports){
 (function (global){
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var _ = require('underscore');
@@ -7291,6 +6891,7 @@ var _ = require('underscore');
 var $ = (typeof window !== "undefined" ? window.$ : typeof global !== "undefined" ? global.$ : null);
 var PubSub = require('pubsub-js');
 var async = require('async');
+var MD5 = require('MD5');
 
 var publishers = module.exports = {};
 
@@ -7321,6 +6922,18 @@ publishers.getProfile = function () {
   var profile = null;
   try {
     profile = JSON.parse(localStorage.getItem(LOCAL_PROFILE_KEY));
+
+    // HACK: Try to ensure we have an avatar, if we have an email address
+    // TODO: Should this be done per-publisher?
+    if (!profile.avatar) {
+      if (!profile.emailHash && profile.email) {
+        profile.emailHash = MD5.hex_md5(profile.email);
+      }
+      if (profile.emailHash) {
+        profile.avatar = 'https://www.gravatar.com/avatar/' + profile.emailHash;
+      }
+    }
+
   } catch (e) {
     /* No-op */
   }
@@ -7364,12 +6977,13 @@ var modules = {
   'Dropbox': require('./Dropbox'),
   'Github': require('./Github')
 };
+
 for (var name in modules) {
   publishers[name] = modules[name](publishers, baseModule);
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./AmazonS3Bucket":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js","./AmazonS3MultiUser":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js","./Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
+},{"./AmazonS3Bucket":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3Bucket.js","./AmazonS3MultiUser":"/home/lmorchard/devel/tootr/src/javascript/publishers/AmazonS3MultiUser.js","./Dropbox":"/home/lmorchard/devel/tootr/src/javascript/publishers/Dropbox.js","./Github":"/home/lmorchard/devel/tootr/src/javascript/publishers/Github.js","MD5":"/home/lmorchard/devel/tootr/src/javascript/vendor/md5.js","async":"/home/lmorchard/devel/tootr/node_modules/async/lib/async.js","pubsub-js":"/home/lmorchard/devel/tootr/node_modules/pubsub-js/src/pubsub.js","underscore":"/home/lmorchard/devel/tootr/node_modules/underscore/underscore.js"}],"/home/lmorchard/devel/tootr/src/javascript/vendor/S3Ajax.js":[function(require,module,exports){
 (function (global){
 ;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 //  S3Ajax v0.1 - An AJAX wrapper package for Amazon S3
@@ -8766,45 +8380,4 @@ window.MD5 = {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"/home/lmorchard/devel/tootr/src/templates/hentry.hbs":[function(require,module,exports){
-// hbsfy compiled Handlebars template
-var Handlebars = require('hbsfy/runtime');
-module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
-  this.compilerInfo = [4,'>= 1.0.0'];
-helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
-  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
-
-
-  buffer += "<section class=\"h-entry\" id=\"";
-  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "\">\n\n  <header>\n    <span class=\"h-card\">\n      <a class=\"u-url\" href=\""
-    + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.url)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "\">\n        <img class=\"u-photo\" src=\""
-    + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.avatar)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "\" width=\"48\" height=\"48\">\n        <span class=\"p-name\">"
-    + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.name)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "</span>\n        <span class=\"p-nickname\">"
-    + escapeExpression(((stack1 = ((stack1 = (depth0 && depth0.author)),stack1 == null || stack1 === false ? stack1 : stack1.nickname)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "</span>\n      </a>\n    </span>\n    <a class=\"u-url\" href=\"";
-  if (helper = helpers.permalink) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.permalink); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "\">\n      <time class=\"dt-published timeago\" datetime=\"";
-  if (helper = helpers.published) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.published); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "\">";
-  if (helper = helpers.published) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.published); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</time>\n    </a>\n  </header>\n\n  <p class=\"e-content\">";
-  if (helper = helpers.content) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.content); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</p>\n\n</section>\n";
-  return buffer;
-  });
-
-},{"hbsfy/runtime":"/home/lmorchard/devel/tootr/node_modules/hbsfy/runtime.js"}]},{},["./src/javascript/app.js"]);
+},{}]},{},["./src/javascript/app.js"]);

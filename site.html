@@ -1,16 +1,68 @@
 <!DOCTYPE html>
 <html>
   <head>
+
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>tootr!</title>
+
+    <link rel="shortcut icon" type="image/png" href="img/tootr2.png">
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/yeti/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="site.css" />
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+
   </head>
-  <body>
-    <section id="wrapper" class="h-feed">
-      <section id="entries">
-      </section>
-    </section>
-    <script src="site.js"></script>
+
+  <body class="index">
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">
+            Tootr
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="col-md-8">
+        <section id="entries"></section>
+        <section class="templates">
+          <div class="h-entry" id="">
+            <header>
+              <span class="h-card">
+                <a class="u-url" href="">
+                  <img class="u-photo" src="" width="48" height="48">
+                  <span class="p-name"></span>
+                  <span class="p-nickname"></span>
+                </a>
+              </span>
+              <a class="u-url" href="">
+                <time class="dt-published timeago" datetime=""></time>
+              </a>
+            </header>
+            <p class="e-content"></p>
+          </div>
+        </section>
+      </div>
+      <aside class="col-md-4" id="sidebar">
+        <section id="about">
+          <dl class="h-card">
+            <dt>Nickname</dt><dd><a class="p-nickname u-url" href=""></a></dd>
+            <dt>Name</dt><dd class="p-name text"></dd>
+            <dt>Bio</dt><dd class="p-note textarea"></dd>
+          </dl>
+        </section>
+      </aside>
+    </div>
+
   </body>
 </html>

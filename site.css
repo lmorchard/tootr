@@ -1,3 +1,12 @@
+body > .container {
+  margin-top: 55px;
+}
+section.templates {
+  display: none;
+}
+template {
+  display: none;
+}
 #sidebar #about {
   font-size: 0.8em;
   background: #efefef;
@@ -9,7 +18,6 @@
   margin: 0;
 }
 #sidebar #about dl.h-card {
-  display: none;
   margin: 0;
 }
 #sidebar #about dl.h-card dt {
@@ -26,9 +34,6 @@
   white-space: inherit;
   overflow: inherit;
   text-overflow: inherit;
-}
-#sidebar #about dl.h-card.ready {
-  display: block;
 }
 .h-entry {
   position: relative;
