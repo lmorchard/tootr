@@ -96,6 +96,7 @@ function handleProfileEdit (ev) {
 function handleProfileEditDone (ev) {
   elAbout.find('.ui-only').remove();
   elAbout.removeClass('editing');
+  saveToots(publisher);
 }
 
 function handleTootFormSubmit (ev) {
@@ -112,7 +113,9 @@ function handleTootFormSubmit (ev) {
 function handleEntryClick (ev) {
   // Toggle per-entry editing UI on click
   var entry = $(this);
-
+  if (entry.hasClass('editing')) {
+    return false;
+  }
   if (entry.hasClass('show-ui')) {
     entry.find('footer.entry-edit-footer').remove();
   } else {
