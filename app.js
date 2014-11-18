@@ -19,6 +19,9 @@ var config = _.extend({
   }
 }[location.hostname]);
 
+var publisher = null;
+var profile = null;
+
 var elAbout = $('section#about');
 var hcard = elAbout.find('dl.h-card');
 
@@ -37,9 +40,6 @@ PubSub.subscribe('publishers.setCurrent', handleSignIn);
 PubSub.subscribe('publishers.clearCurrent', handleSignOut);
 
 publishers.checkAuth();
-
-var publisher = null;
-var profile = null;
 
 function handleSignIn (msg, currentPublisher) {
   publisher = currentPublisher;
